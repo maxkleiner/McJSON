@@ -1,0 +1,2230 @@
+//****************Fractran Tester**************************
+program ContFrac_FractranTester_mX5_64_PerlRegex_DcelphiRegex_McJSON;
+
+//https://rosettacode.org/wiki/Fractran#Delphi
+//https://github.com/MagicFoundation/Alcinoe/blob/master/Source/Alcinoe.CGI.pas
+                                                        
+//{$APPTYPE CONSOLE}    ☮ ✞ π 📌 🐞
+//https://rosettacode.org/wiki/Continued_fraction#Pascal
+
+{uses
+  SysUtils;   }
+  
+  
+  const JSONDATA =
+  
+  ' [                               '+LF+
+  '{                                '+LF+
+  '  "a":{                          '+LF+
+  '    "username":"aaamax",         '+LF+
+  '    "email":"aaa@gmail.com"      '+LF+
+  '  }                              '+LF+
+  '},                               '+LF+
+  '{                                '+LF+
+  '  "b":{                          '+LF+
+  '    "username":"bbbbob",          '+LF+
+  '    "email":"bbb@gmail.com"      '+LF+
+  '  }                              '+LF+
+  '}                                '+LF+
+']                                  ';
+
+type TCoeffFunction = function( n : integer) : extended;
+
+// Calculate continued fraction as a sum, working forwards.
+// Stop on reaching a term with absolute value less than epsilon,
+//   or on reaching the maximum number of terms.
+procedure CalcContFrac( a, b : TCoeffFunction;
+                        epsilon : extended;
+                        maxNrTerms : integer {= 1000}); // optional, with default
+var
+  n : integer;
+  sum, term, u, v : extended;
+  whyStopped : string;
+begin
+  sum:= a(0);
+  term:= b(1)/a(1);
+  v:= a(1);
+  n:= 1;
+  repeat
+    sum:= sum + term;
+    inc(n);
+    u:= v;
+    v:= a(n) + b(n)/u;
+    term:= -term * b(n)/(u*v);
+  until (Abs(term) < epsilon) or (n >= maxNrTerms);
+  if n >= maxNrTerms then whyStopped:= 'too many terms'
+                     else whyStopped:= 'converged';
+  WriteLn({SysUtils.}Format( '%21.17f after %d terms (%s)',
+                                          [sum, n, whyStopped]));
+end;
+
+//---------------- a and b for sqrt(2) ----------------
+function a_sqrt2( n : integer) : extended;
+begin
+  if n = 0 then result := 1
+           else result := 2;
+end;
+function b_sqrt2( n : integer) : extended;
+begin
+  result := 1;
+end;
+
+//---------------- a snd b for e  ----------------
+function a_e( n : integer) : extended;
+begin
+  if n = 0 then result := 2
+           else result := n;
+end;
+function b_e( n : integer) : extended;
+begin
+  if n = 1 then result := 1
+           else result := n - 1;
+end;
+
+//-------- Rosetta Code a and b for pi --------
+function a_pi( n : integer) : extended;
+begin
+  if n = 0 then result := 3
+           else result := 6;
+end;
+function b_pi( n : integer) : extended;
+var
+  temp : extended;
+begin
+  temp := 2*n - 1;
+  result := temp*temp;
+end;
+
+//-------- More efficient a and b for pi --------
+function a_pi_alt( n : integer) : extended;
+begin
+  if n = 0 then result := 0
+           else result := 2*n - 1;
+end;
+function b_pi_alt( n : integer) : extended;
+var temp : extended;
+begin
+  if n = 1 then
+    result := 4
+  else begin
+    temp := n - 1;
+    result := temp*temp;
+  end;
+end;
+
+Procedure PerlRegEX_ExtractDemo;
+var regEx: TPerlRegEx; //or OleVariant if HISUtils; 😎
+InStr, ResStr:String;
+begin
+   ResStr:='';
+   InStr:= 'Please e-mail us at support@mycompany.com or to sales@mycompany.com or'
+             +' max.kleiner@bfh.ch';
+   // Create a regular expression
+   regEx:= TPerlRegEx.create; //HISUtils.RegExpr;
+   // Set regular expression pattern that specifies an e-mail address
+   regEx.regex:='\w+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,6}';
+   regEx.subject:=inStr;
+   // Execute search
+   if regEx.match then Repeat
+     ResStr:= ResStr + regEx.Groups[0] + '; ';
+   Until not regEx.matchAgain;
+   //Log.Message('These e-mails were extracted: '+ResStr);
+   writeln('These e-mails were extracted: '+ResStr);
+   // Posts the following to the log:
+   //'These e-mails were extracted: support@mycompany.com; sales@mycompany.com;'
+end;  
+
+Procedure RegEX_ExtractDemo;
+var regEx: TRegExpr; //or OleVariant if HISUtils;
+InStr, ResStr:String;          //mg: TRegExOption TMatchEvaluator //TregEx;
+begin
+   ResStr:='';
+  // roMultiLine //roIgnorePatternSpace //roIgnoreCase
+   InStr:= 'Please e-mail us at support@mycompany.com or to sales@mycompany.com';
+   // Create a regular expression
+   regEx:= TRegExpr.create; //HISUtils.RegExpr;
+   // Set regular expression pattern that specifies an e-mail address
+   //regEx.Expression:='\w+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,6}';
+   regEx.Expression:='(@)';
+   // Execute search
+   if regEx.Exec(InStr) then Repeat
+     ResStr:= ResStr + regEx.Match[0] + '; ';
+   Until not regEx.ExecNext;
+   
+   //Log.Message('These e-mails were extracted: '+ResStr);
+   writeln('These e-mails were extracted: '+ResStr);
+   // Posts the following to the log:
+   //'These e-mails were extracted: support@mycompany.com; sales@mycompany.com;'
+end;  
+
+//program FractranTest; {$APPTYPE CONSOLE}
+
+procedure TFractancompile(prog: string); forward;
+procedure TFractancompile2(prog: string); forward;
+procedure TFractanexec(val: Integer); forward;
+function TFractanstep(val: Integer): integer; forward;
+procedure TFractandump(); forward;
+
+const
+  DATA =
+    '17/91 78/85 19/51 23/38 29/33 77/29 95/23 77/19 1/17 11/13 13/11 15/14 15/2 55/1';
+
+var limit: Integer;
+    num, den: array of integer; //ntTArray<Integer>;
+
+procedure TFractanCreate(prog: string; val: Integer);
+begin
+  limit := 15;
+  Tfractancompile2(prog);
+  Tfractandump();
+  Tfractanexec(2);   //}
+end;
+
+procedure TFractancompile(prog: string);
+var reg: TPerlRegex;
+  //m: TMatch;
+begin
+  reg := TPerlRegex.Create;
+  reg.regex:= '\s*(\d*)\s*\/\s*(\d*)\s*';
+  //reg.regex:= '\\s*(\\d*)\\s*\\/\\s*(\\d*)\\s*(.*)';
+  // reg.regex:= '\s*(\d*)\s*\/\s*(\d*)\s*(.*)';
+  //reg.regex:= '([0-9]+)/([0-9]+)';
+    reg.subject:= prog;
+  //m := reg.Match(prog);
+  //while m.Success do
+  //  writeln('not match '+prog)
+  
+  if reg.match then Repeat
+    //writeln('match '+prog)
+    SetLength(num, Length(num) + 1);
+    num[high(num)] := StrToIntDef(reg.groups[1], 0);
+    SetLength(den, Length(den) + 1);
+    den[high(den)] := StrToIntDef(reg.groups[2], 0);
+
+    //m := m.NextMatch;
+   Until not reg.MatchAgain;
+   reg.Free;
+end;
+
+procedure TFractancompile2(prog: string);
+var
+  reg: TRegEx;
+  m: TMatch;
+begin
+  reg := TRegEx.Create('\s*(\d*)\s*\/\s*(\d*)\s*', [rroNotEmpty]);
+  //reg := TRegEx.Create1('\s*(\d*)\s*\/\s*(\d*)\s*');
+  m := reg.Match(prog);
+  while m.Success do
+  begin
+    SetLength(num, Length(num) + 1);
+    num[high(num)] := StrToIntDef(m.Groups[1].Value, 0);
+
+    SetLength(den, Length(den) + 1);
+    den[high(den)] := StrToIntDef(m.Groups[2].Value, 0);
+
+    m := m.NextMatch;
+  end;
+end;
+
+procedure TFractanexec(val: Integer);
+var n: Integer;
+begin
+  n := 0;
+  while (n < limit) and (val <> -1) do begin
+    Writeln(itoa(n)+': '+itoa(val));
+    val := Tfractanstep(val);
+    inc(n);
+  end;
+end;
+
+function TFractanstep(val: Integer): integer;
+var i: integer;
+begin
+  i := 0;
+  while (i < length(den)) and (val mod den[i] <> 0) do
+    inc(i);
+  if i < length(den) then begin
+       result:= round(num[i] * val / den[i]);
+    exit; end;
+  result := -1;
+end;
+
+procedure TFractandump();
+var i: Integer;
+begin
+  for i := 0 to high(den) do
+    Write(itoa(num[i])+ '/'+ itoa( den[i])+ ' ');
+  Writeln('');
+end;
+
+procedure testTRegExprFloat; 
+  begin 
+  with TRegExpr.Create do try 
+    //Expression:= '[+-]?([0-9]*[.])?[0-9]+'; 
+    Expression:= '^[0-9]*$'; 
+    if Exec ('314159') then 
+         writeln(Match[0]+' Match found'); 
+    finally Free; 
+   end; 
+end; 
+
+function CheckCoefficientBoxesValidInput(InputtedTerm : TEdit) : boolean;
+ var
+  RegularExpression : TRegEx;
+  Match : TMatch;
+ begin
+  RegularExpression.Create1('[-+]?[0-9]*\.?[0-9]+');
+  Match := RegularExpression.Match(InputtedTerm.Text);
+  if Match.Success then begin
+    ShowMessage('Success.');
+   end;
+ end;
+
+//https://stackoverflow.com/questions/27535200/creating-a-regular-expression-in-delphi-using-tregex 
+procedure CheckRegEx(const Input: string);
+var  Regex : TRegEx;
+begin
+    Regex:= Tregex.Create1('^\s*[-+]?[0-9]*\.?[0-9]+\s*$');
+    regex.replace (input, '')
+     regex.replaceall (input,'^\s*[-+]?[0-9]*\.?[0-9]+\s*$','',[rroNone])
+  Writeln(Input+' '+ botostr(regex.ismatch(Input)));
+end;
+
+function TRegExReplace(const Input, Replacement: string): string;
+var FRegEx: TRegex;
+begin
+  //FRegEx.Subject := Input;
+  //FRegEx.Replacement := Replacement;
+  //FRegEx.ReplaceAll;
+  //Result := FRegEx.Subject;
+end;
+
+procedure TDirectionsBtnGoGoogleClick(Sender: TObject);
+Var
+  LocFrom,LocTo:RNavigateLongLat;
+  Long,Lat:Double;
+begin
+
+  LocFrom:= RNavigateLongLat.create;
+   Locto:= RNavigateLongLat.create;
+  
+  //Long:=RealFrmDegreeText('38°02''59.4"S');
+  //Lat:= RealFrmDegreeText('145°08''18.8"E');
+  
+  //https://www.google.com/maps/place/Zytglogge/@46.9479717,7.4452134,17
+  Long:=RealFrmDegreeText('7.4452134,17');
+  Lat:= RealFrmDegreeText('46.9479717,7');
+   LocFrom.CreateDec(Long,Lat);
+  //Coordinates of Bern in degrees and decimal minutes
+  Long:=RealFrmDegreeText('7°26.8464"E');
+  Lat:= RealFrmDegreeText('46°56.8854"N');
+  
+  LocTo.CreateDec(Long,Lat);
+  //NavigateLongLat.longituderad := long;
+  //NavigateLongLat.Latituderad := lat;
+  //Long:=RealFrmDegreeText(EdtLong2.Text);
+  //Lat:= RealFrmDegreeText(EdtLat2.Text);
+  //Long:=RealFrmDegreeText(EdtLong2.Text);
+  //Lat:= RealFrmDegreeText(EdtLat2.Text);
+  //LocTo.CreateDec(Long,Lat);
+  //writeln({LocFrom.}GoogleLinkDirectionsTo(LocTo);
+  //writeln({LocFrom.}GoogleLinkDirectionsTo(CreateDec(Long,Lat),0));
+   writeln(LocFrom.GoogleLinkDirectionsTo(locto,0));
+  //LBlCrowFlies.Text:='Distance as Crow Flys ='+FormatFloat('0.0km',LocTo.MetresFrom(LocFrom)/1000);
+ writeln('Distance as Crow Flys ='+FormatFloat('0.0km',LocTo.MetresFrom(locfrom)/1000));
+  openWeb(locfrom.GoogleLinkDirectionsTo(locto,0));
+  
+  LocFrom.Free; Locto.Free;
+
+  //if CBxGoNow.IsChecked then
+    // LocFrom.GoGoogleDirectionsTo(LocTo);
+end;
+
+procedure SaveCanvasToFile(canvas: TCanvas; const fileName: string);
+var
+  bmp: TBitmap;  arect: trect;
+begin
+  bmp := TBitmap.Create;
+  try
+    arect:=  canvas.ClipRect;
+    bmp.SetSize(arect.left, arect.Bottom);
+    BitBlt(bmp.canvas.Handle, 0, 0, bmp.Width, bmp.Height, canvas.Handle, 0, 0, SRCCOPY);
+    bmp.SaveToFile(fileName);
+  finally
+    bmp.Free;
+  end;
+end; { SaveCanvasToFile }
+
+procedure getfiles (FileInfo: TSearchRec) ;
+begin
+end;
+
+//function TWSFunc', 'Function (sync: string): boolean)');
+function TWSFunc2(sync: string): boolean;
+begin
+  result:= false;
+end;  
+
+
+function AnsiStringToIDBytes(a: ansistring): TIDBytes;
+{$IFNDEF NEED_FAKE_ANSISTRING}
+var
+  t: nativeint;
+begin
+  setlength(result, length(a));
+  for t := 0  to length(a)-1 do
+    //result[t] := ord(a[STRZ+t]);
+
+end;
+{$ELSE}
+var
+  t: ni;
+begin
+  setlength(result, length(a));
+  for t := 0  to length(a)-1 do
+  //  result[t] := a.bytes[STRZ+t];
+end;
+{$ENDIF}
+
+procedure SIRegister_WebString(self: tobject);
+begin
+  //HTTPException');
+  //HTTPString', 'string');
+  //HTTPChar', 'char');
+  //PHTTPChar', '^char // will not work');
+  //HTTPContentTextString', 'UTF8String');
+  //HTTPContentTextChar', 'char');
+  //PHTTPContentTextChar', 'char');
+  //HTTPContentTextString', 'string');
+  //HTTPContentTextChar', 'Char');
+  //PHTTPContentTextChar', 'Char');
+  //HTTPString', 'String');
+  //HTTPChar', 'Char');
+ // CL.AddTypeS('PHTTPChar', '^Char // will not work');
+  //DecodeURLParams( sURL : string; out sDocument : string) : TNameValuePairList');
+  //DecodeURLParams( sURL : HTTPString; out sDocument : string) : TNameValuePairList;');
+  //ApplyRelativeURL( sBaseURL : HTTPString; sURL : HTTPString) : HTTPString');
+  //RemoveComments( sHTML : HTTPString) : HTTPString');
+  //RepairLinuxHTTPString( sLinuxHTTPString : HTTPString) : HTTPString');
+  //ExtractURLPAth( sURL : HTTPString) : HTTPString');
+  //ExtractURLFileNAme( sURL : string) : string');
+  //ExtractLinks( sBasePath : HTTPString; sHTML : HTTPString) : HTTPString');
+  //AmpEncode( s : HTTPString) : HTTPString');
+  //SplitAccount( sAccount : HTTPString; out iDataCenter : integer; out sAccountID : HTTPString)');
+  //RandomHTTPString( iLength : integer) : HTTPString');
+  //Flashify( sl : TStringList) : HTTPString');
+  //AdjustWebPath( sPath : HTTPString) : HTTPString');
+  //AdjustURLForParams( sPath : HTTPString) : HTTPString');
+  //StaticHashToInt( sHash : HTTPString) : integer');
+  //IntToStaticHash( iNumber : integer) : HTTPString;');
+  //CRToBR( s : HTTPString) : HTTPString');
+  //SimpleEncrypt( s : HTTPString) : HTTPString');
+  //SimpleDecrypt( s : HTTPString) : HTTPString');
+  //SlashDot( sHTTPStringWithSlashes : HTTPString) : HTTPString');
+  //Simplify( i : integer) : HTTPString');
+  //BlankString( var sHTTPString : HTTPString; sBlankChar : HTTPChar; iStartAt, iEndAt : integer)');
+ //HackContentLength( sHeader : HTTPString) : integer');
+ //DecodeInlineURL( sURL : HTTPString) : HTTPString');
+ //EncodeInlineURL( sURL : HTTPString) : HTTPString');
+ //StrToBool2( s : HTTPString) : boolean');
+ //BoolToSTr2( b : boolean) : HTTPString');
+ //ClipLeft( s, sBeforeAndIncluding : HTTPString) : HTTPString');
+ //ClipRight( s, sStartingWith : HTTPString) : HTTPString');
+ //GetHeaderParam( sHead, sParamName : HTTPString; iInstance : integer) : HTTPString');
+ //ChangeHeaderParam( sHead, sParamName, sNewValue : HTTPString) : HTTPString');
+ //AddHeaderParam( sHead, sParamName, sValue : HTTPString) : HTTPString');
+  //MergeHeaderAndFooter( var sHeader : HTTPString; sFooter : HTTPString)');
+ //GetCommand( sHead : HTTPString) : HTTPString');
+ //GetDocument( sHead : HTTPString) : HTTPString');
+ //GetResultMessage( sHead : HTTPString) : HTTPString');
+ //GetResultCode( sHead : HTTPString) : HTTPString');
+ //ChangeDocument( sHead, sNewDocument : HTTPString) : HTTPString');
+ //IsHeaderComplete( sFullRequest : HTTPString) : boolean');
+ //IsFooterComplete( sFullRequest : HTTPString) : boolean');
+ //ExtractHeader( sFullRequest : HTTPString) : HTTPString');
+ //ExtractContent( sFullRequest : HTTPString) : HTTPString');
+ //EncodeXMLString3( s : HTTPString; sEscapeChar : HTTPchar) : HTTPString;');
+ //IsValidURL( sURL : string) : boolean');
+ //EncodeTAGString( s : HTTPString; sEscapeChar : HTTPChar) : HTTPString;');
+ //EncodeWebString( s : HTTPString; sEscapeChar : HTTPChar) : HTTPString;');
+ //DecodeWebString( sOriginal : HTTPString; sEscapeChar : HTTPString) : HTTPString;');
+ //XMLStringToPlainText( sOriginal : HTTPString; sEscapeChar : HTTPChar) : HTTPString');
+  //Decodeurl2( sUrl : HTTPString; out sHostAndPort, sDocument : HTTPString)');
+ //IsChunkComplete( sChunkedContent : HTTPString) : boolean');
+ //GetChunkLength( sChunkedContentAtChunkStart : HTTPString) : integer');
+  //DecodeChunk( var sChunkToChunkBody : HTTPString; out sRemainder : HTTPString)');
+  //DigitToInteger( c : HTTPChar) : integer');
+  //HexToInt2( sHexHTTPString : HTTPString) : integer');
+  //ExtractWebPath( sPath : HTTPString) : HTTPString');
+  //MakeSecureURL( sURL : HTTPString) : HTTPString');
+  //FindLinkInHTML( sBaseURL : HTTPString; sHTML : HTTPString; sLinkText : HTTPString; iInstance : integer) : HTTPString');
+  //FindIFrameInHTML( sBaseURL : HTTPString; sHTML : HTTPString; iInstanceOneBased : integer; out sSrc : HTTPString) : boolean');
+  //FindTagAttributeInHTML( sBaseURL : HTTPString; sHTML : HTTPString; sTag : HTTPString; sAttribute : HTTPString; iInstanceOneBased : integer; out sSrc : HTTPString) : boolean');
+  //StringListToHTML( sl : TStringList) : string');
+end;
+
+(*
+procedure SIRegister_WebString(CL: TPSPascalCompiler);
+begin
+  CL.AddClassN(CL.FindClass('TOBJECT'),'HTTPException');
+  CL.AddTypeS('HTTPString', 'string');
+  CL.AddTypeS('HTTPChar', 'char');
+  //CL.AddTypeS('PHTTPChar', '^char // will not work');
+  CL.AddTypeS('HTTPContentTextString', 'UTF8String');
+  CL.AddTypeS('HTTPContentTextChar', 'char');
+  CL.AddTypeS('PHTTPContentTextChar', 'char');
+  CL.AddTypeS('HTTPContentTextString', 'string');
+  CL.AddTypeS('HTTPContentTextChar', 'Char');
+  CL.AddTypeS('PHTTPContentTextChar', 'Char');
+  CL.AddTypeS('HTTPString', 'String');
+  CL.AddTypeS('HTTPChar', 'Char');
+  //CL.AddTypeS('PHTTPChar', '^Char // will not work');
+ CL.AddDelphiFunction('Function DecodeURLParams( sURL : string; out sDocument : string) : TNameValuePairList');
+ CL.AddDelphiFunction('Function DecodeURLParams( sURL : HTTPString; out sDocument : string) : TNameValuePairList;');
+ CL.AddDelphiFunction('Function ApplyRelativeURL( sBaseURL : HTTPString; sURL : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function RemoveComments( sHTML : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function RepairLinuxHTTPString( sLinuxHTTPString : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function ExtractURLPAth( sURL : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function ExtractURLFileNAme( sURL : string) : string');
+ CL.AddDelphiFunction('Function ExtractLinks( sBasePath : HTTPString; sHTML : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function AmpEncode( s : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Procedure SplitAccount( sAccount : HTTPString; out iDataCenter : integer; out sAccountID : HTTPString)');
+ CL.AddDelphiFunction('Function RandomHTTPString( iLength : integer) : HTTPString');
+ CL.AddDelphiFunction('Function Flashify( sl : TStringList) : HTTPString');
+ CL.AddDelphiFunction('Function AdjustWebPath( sPath : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function AdjustURLForParams( sPath : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function StaticHashToInt( sHash : HTTPString) : integer');
+ CL.AddDelphiFunction('Function IntToStaticHash( iNumber : integer) : HTTPString;');
+ CL.AddDelphiFunction('Function CRToBR( s : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function SimpleEncrypt( s : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function SimpleDecrypt( s : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function SlashDot( sHTTPStringWithSlashes : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function Simplify( i : integer) : HTTPString');
+ CL.AddDelphiFunction('Procedure BlankString( var sHTTPString : HTTPString; sBlankChar : HTTPChar; iStartAt, iEndAt : integer)');
+ CL.AddDelphiFunction('Function HackContentLength( sHeader : HTTPString) : integer');
+ CL.AddDelphiFunction('Function DecodeInlineURL( sURL : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function EncodeInlineURL( sURL : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function StrToBool2( s : HTTPString) : boolean');
+ CL.AddDelphiFunction('Function BoolToSTr2( b : boolean) : HTTPString');
+ CL.AddDelphiFunction('Function ClipLeft( s, sBeforeAndIncluding : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function ClipRight( s, sStartingWith : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function GetHeaderParam( sHead, sParamName : HTTPString; iInstance : integer) : HTTPString');
+ CL.AddDelphiFunction('Function ChangeHeaderParam( sHead, sParamName, sNewValue : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function AddHeaderParam( sHead, sParamName, sValue : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Procedure MergeHeaderAndFooter( var sHeader : HTTPString; sFooter : HTTPString)');
+ CL.AddDelphiFunction('Function GetCommand( sHead : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function GetDocument( sHead : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function GetResultMessage( sHead : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function GetResultCode( sHead : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function ChangeDocument( sHead, sNewDocument : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function IsHeaderComplete( sFullRequest : HTTPString) : boolean');
+ CL.AddDelphiFunction('Function IsFooterComplete( sFullRequest : HTTPString) : boolean');
+ CL.AddDelphiFunction('Function ExtractHeader( sFullRequest : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function ExtractContent( sFullRequest : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function EncodeXMLString3( s : HTTPString; sEscapeChar : HTTPchar) : HTTPString;');
+ CL.AddDelphiFunction('Function IsValidURL( sURL : string) : boolean');
+ CL.AddDelphiFunction('Function EncodeTAGString( s : HTTPString; sEscapeChar : HTTPChar) : HTTPString;');
+ CL.AddDelphiFunction('Function EncodeWebString( s : HTTPString; sEscapeChar : HTTPChar) : HTTPString;');
+ CL.AddDelphiFunction('Function DecodeWebString( sOriginal : HTTPString; sEscapeChar : HTTPString) : HTTPString;');
+ CL.AddDelphiFunction('Function XMLStringToPlainText( sOriginal : HTTPString; sEscapeChar : HTTPChar) : HTTPString');
+ CL.AddDelphiFunction('Procedure Decodeurl2( sUrl : HTTPString; out sHostAndPort, sDocument : HTTPString)');
+ CL.AddDelphiFunction('Function IsChunkComplete( sChunkedContent : HTTPString) : boolean');
+ CL.AddDelphiFunction('Function GetChunkLength( sChunkedContentAtChunkStart : HTTPString) : integer');
+ CL.AddDelphiFunction('Procedure DecodeChunk( var sChunkToChunkBody : HTTPString; out sRemainder : HTTPString)');
+ CL.AddDelphiFunction('Function DigitToInteger( c : HTTPChar) : integer');
+ CL.AddDelphiFunction('Function HexToInt2( sHexHTTPString : HTTPString) : integer');
+ CL.AddDelphiFunction('Function ExtractWebPath( sPath : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function MakeSecureURL( sURL : HTTPString) : HTTPString');
+ CL.AddDelphiFunction('Function FindLinkInHTML( sBaseURL : HTTPString; sHTML : HTTPString; sLinkText : HTTPString; iInstance : integer) : HTTPString');
+ CL.AddDelphiFunction('Function FindIFrameInHTML( sBaseURL : HTTPString; sHTML : HTTPString; iInstanceOneBased : integer; out sSrc : HTTPString) : boolean');
+ CL.AddDelphiFunction('Function FindTagAttributeInHTML( sBaseURL : HTTPString; sHTML : HTTPString; sTag : HTTPString; sAttribute : HTTPString; iInstanceOneBased : integer; out sSrc : HTTPString) : boolean');
+ CL.AddDelphiFunction('Function StringListToHTML( sl : TStringList) : string');
+end;
+  *)
+
+var
+  sIndent: string;
+    
+  function Test01(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 01: parse simple object';
+  N := TMcJsonItem.Create;
+  try
+    N.AsJSON := ' { "key" : "value" } ';
+    Result   :=   (N.ItemType               = jitObject)
+              and (N.Count                  = 1        )
+              and (N.Key                    = ''       )
+              and (N['key'].Key             = 'key'    )
+              and (N.HasKey('key')          = True     )
+              and (N.HasKey('not')          = False    )
+              and (N.HasChild               = True     )
+              and (N['key'].HasChild        = False    )
+              and (N['key'].AsString        = 'value'  )
+              and (N.Keys[0]                = 'key'    )
+              and (N.Items[0].AsString      = 'value'  )
+              and (N.Values['key'].AsString = 'value'  );
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + 'sIndent' + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test02(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 02: parse simple array';
+  N := TMcJsonItem.Create;
+  try
+    N.AsJSON := '{ "array": [1, 2.0, "3"] }';
+    Result   :=   (N.Count                        = 1        )
+              and (N.ItemType                     = jitObject)
+              and (N['array'].ItemType            = jitArray )
+              and (N['array'].Items[0].ItemType   = jitValue )
+              and (N['array'].Count               = 3        )
+              and (N['array'].Key                 = 'array'  )
+              and (N['array'].Items[1].AsString   = '2.0'    )
+              and (N['array'].Items[2].AsInteger  = 3        );
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test03(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 03: parse simple sub object array';
+  N := TMcJsonItem.Create;
+  try
+    N.AsJSON := '{ "sub": [{"key1": 1}, {"key2": 2}] }';
+    Result   :=   (N.ItemType                           = jitObject)
+              and (N.Count                              = 1        )
+              and (N['sub'].ItemType                    = jitArray )
+              and (N['sub'].Count                       = 2        )
+              and (N.HasKey('sub')                      = True     )
+              and (N.HasKey('not')                      = False    )
+              and (N['sub'].Key                         = 'sub'    )
+              and (N['sub'].Items[1]['key2'].Key        = 'key2'   )
+              and (N['sub'].Items[1]['key2'].AsInteger  = 2        );
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test04(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 04: simple object value change';
+  N := TMcJsonItem.Create;
+  try
+    N.AsJSON := '{ "key": "value" }';
+    N['key'].AsString := 'new value';
+    Result := (N['key'].AsString = 'new value');
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test05(out Msg: string): Boolean;
+var
+  N, M, P, Q: TMcJsonItem;
+begin
+  Msg := 'Test 05: Add, Insert, Delete functions';
+  N := TMcJsonItem.Create;
+  M := TMcJsonItem.Create;
+  P := TMcJsonItem.Create;
+  Q := TMcJsonItem.Create;
+  try
+    // add sub item.
+    N.AsJSON := '{ "sub": [{"key1": 1}, {"key2": 2}] }';
+    M.Add('key3').AsInteger := 3;
+    N['sub'].Add3(M);
+    Result :=     (N.ItemType                           = jitObject)
+              and (N.Count                              = 1        )
+              and (N['sub'].ItemType                    = jitArray )
+              and (N['sub'].Count                       = 3        )
+              and (N['sub'].Key                         = 'sub'    )
+              and (N['sub'].Items[2]['key3'].Key        = 'key3'   )
+              and (N['sub'].Items[2]['key3'].AsInteger  = 3        );
+    // add item with empty value.
+    N.Clear;
+    N.Add('k');
+    Result := Result and (N.AsJSON = '{"k":""}');
+    // add item with empty key.
+    N.Clear;
+    N.Add('').AsString := 'v';
+    Result := Result and (N.AsJSON = '{"":"v"}');
+    // add empty array
+    N.Clear;
+    N.Add('a').ItemType := jitArray;
+    Result := Result and (N.AsJSON = '{"a":[]}');
+    // add objects into array
+    N['a'].Add('k1').AsString := 'v1';
+    N['a'].Add('k2').AsString := 'v2';
+    Result := Result and (N.AsJSON = '{"a":[{"k1":"v1"},{"k2":"v2"}]}');
+    // add empty object
+    N.Clear;
+    N.Add('o').ItemType := jitObject;
+    Result := Result and (N.AsJSON = '{"o":{}}');
+    // add nested object
+    N.Clear;
+    N.Add('k1').Add('k2').Add('k3').AsString := 'v3';
+    Result := Result and (N.AsJSON = '{"k1":{"k2":{"k3":"v3"}}}');
+    // add int values into array
+    P.Add1('a', jitArray);
+    P['a'].Add('').AsInteger := 1;
+    P['a'].Add('').AsInteger := 2;
+    P['a'].Add('').AsInteger := 3;
+    Result := Result and (P.AsJSON = '{"a":[1,2,3]}');
+    // add item
+    Q.AsJSON := '{"x":0}';
+    P['a'].Add3(Q);
+    Result := Result and (P.AsJSON = '{"a":[1,2,3,{"x":0}]}');
+    // add obj values into array
+    P.Clear;
+    Q.Clear;
+    P.Add1('a', jitArray);
+    Q.Add('k1').AsInteger := 1;
+    P['a'].Add('').AsObject := Q;
+    P['a'].Add('').AsObject := Q;
+    Result := Result and (P.AsJSON = '{"a":[{"k1":1},{"k1":1}]}')
+                     and (P['a'].Count = 2);
+    // delete item by index
+    P['a'].Delete(1);
+    Result := Result and (P.AsJSON = '{"a":[{"k1":1}]}')
+                     and (P['a'].Count = 1);
+    // remove item by key
+    P.delete1('a');
+    Result := Result and (P.AsJSON = '{}')
+                     and (P.Count  = 0   );
+    // remove empty item
+    P.delete(0);
+    Result := Result and (P.AsJSON = '{}')
+                     and (P.Count  = 0   );
+    // insert item by key
+    P.Insert('c', 0).AsInteger := 3;
+    P.Insert('b', 0).AsInteger := 2;
+    P.Insert('a', 0).AsInteger := 1;
+    Result := Result and (P.AsJSON = '{"a":1,"b":2,"c":3}')
+                     and (P.Count  = 3 );
+    // insert item
+    Q.AsJSON := '{"x":0}';
+    P.ItemType := jitArray;
+    P.Insert1(Q, 1);
+    Result := Result and (P.AsJSON = '[1,{"x":0},2,3]')
+                     and (P.Count  = 4 );
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+  M.Free; // yes! Add cloned M inside N
+  P.Free;
+  Q.Free; // yes! Add/Insert cloned Q inside P.
+end;
+
+function Test06(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 06: object is nil test';
+  N := TMcJsonItem.Create;
+  try
+    N.AsJSON := '{ "array": [1, "2", 3] }';
+    //N['not'].Items[3].AsInteger := 4;
+    N['array'].Items[3].AsInteger := 4;
+    //N['array'].Values[0].SetInt(4);        // will not compile in Delphi
+    Result := False;
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := True;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test07(out Msg: string): Boolean;
+var
+  N, M: TMcJsonItem;
+  Aux: Boolean;
+begin
+  Msg := 'Test 07: getters and setters';
+  N := TMcJsonItem.Create;
+  try
+    N.AsJSON := '{ "i": 123, "f": 123.456, "s": "abc", "b": True, "n": Null }';
+    // changes
+    N['i'].AsInteger := 321;
+    N['f'].AsNumber  := 456.123;
+    N['s'].AsString  := 'cba';
+    N['b'].AsBoolean := False;
+    // get reference as object.
+    M := N.AsObject;
+    // aux test
+    Aux := abs(N['f'].AsNumber - 456.123) < 0.001;
+    // check result
+    Result :=     (N['i'].AsInteger = 321        )
+              and (N['i'].AsJSON    = '"i":321'  )
+              and (Aux                           )
+              and (N['s'].AsString  = 'cba'      )
+              and (N['b'].AsBoolean = False      )
+              and (N['n'].IsNull                 )
+              and (M.Count          = 5          )
+              and (M['i'].AsInteger = 321        )
+              and (M['s'].AsJSON    = '"s":"cba"')
+              and (M['s'].AsString  = 'cba'      )
+              and (M['b'].AsBoolean = False      )
+              and (M['n'].IsNull                 );
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test08(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 08: numbers: scientific notation';
+  N := TMcJsonItem.Create;
+  try
+    N.AsJSON := '{ "n": -1.23456789E-10 }';
+    Result   :=   (N['n'].AsString = '-1.23456789E-10')
+              and (N['n'].AsNumber >  -1.23456789E-00 );
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+
+function Test09(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+  S: string;
+begin
+  Msg := 'Test 09: escapes';
+  N := TMcJsonItem.Create;
+  Result := True;
+  try
+    // check parse escapes
+    N.AsJSON := '{ "k": "\b\t\n\f\r\u05d1 \" \\ \/"}';
+    Result := Result and (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
+    // escape string function
+    S := McJsonEscapeString('\a"b"ç',jetNone);
+    Result := Result and (S = '\\a\"b\"\u00E7');
+    // unescape function
+    S := McJsonUnEscapeString('aB\t\n\u00e7d\u00e7'); // debug sees 'ç' in S.
+    Result := Result and (S = 'aB' + #9 + #10 + 'çdç');
+    // escape and unescape sequence
+    S := McJsonEscapeString('a/b\c"' + #8 + #9 + #10 + #12 + #13, jetNone);
+    Result := Result and (S = 'a\/b\\c\"\b\t\n\f\r');
+    S := McJsonUnEscapeString(S);
+    Result := Result and (S = ('a/b\c"' + #8 + #9 + #10 + #12 + #13) );
+    // bad escape (will be ignored)
+    S := McJsonUnEscapeString('a\"\');
+    Result := Result and (S = 'a"');
+    // escape levels
+    S := McJsonEscapeString('normal: \"/', jetNormal);
+    Result := Result and (S = 'normal: \\\"/');
+    S := McJsonEscapeString('strict: \"/', jetStrict);
+    Result := Result and (S = 'strict: \\\"\/');
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;                         
+  end;
+  N.Free;
+end; 
+    
+function Test10(out Msg: string): Boolean;
+var
+  StrL: TStringList;
+  i: Integer;
+  N: TMcJsonItem;
+  anyPass: Boolean;
+  sName, sTest: string;
+begin
+  Msg := 'Test 10: invalid JSON';
+  StrL := TStringList.Create;
+  N := TMcJsonItem.Create;
+  anyPass := False;
+  try
+    // value bad formats
+    StrL.Add('bad value: not open'       +'='+ '{"k":value"}'         );
+    StrL.Add('bad value: not close'      +'='+ '{"k":"value}'         );
+    StrL.Add('bad value: not number 1'   +'='+ '{"k":12345a}'         );
+    StrL.Add('bad value: not number 2'   +'='+ '{"k":+-1234}'         );
+    StrL.Add('bad value: not number 3'   +'='+ '{"k":1234E}'          );
+    StrL.Add('bad value: not number 4'   +'='+ '{"k":1234E+-1}'       );
+    StrL.Add('bad value: not number 5'   +'='+ '{"k":1234E+a}'        );
+    StrL.Add('bad value: not number 6'   +'='+ '{"k":1,234}'          );
+    StrL.Add('bad value: leading 0s 1'   +'='+ '{"k":01234}'          );
+    StrL.Add('bad value: leading 0s 2'   +'='+ '{"k":00004}'          );
+    StrL.Add('bad value: invalid'        +'='+ '{"k":"v"a}'           );
+    StrL.Add('bad value: line break'     +'='+ '{"k":"v'+#13+'"}'     );
+    // values not recognized
+    StrL.Add('bad value: not keyword 1'  +'='+ '{"k":truee}'          );
+    StrL.Add('bad value: not keyword 2'  +'='+ '{"k":falsi}'          );
+    StrL.Add('bad value: not keyword 3'  +'='+ '{"k":nil  }'          );
+    StrL.Add('bad value: not keyword 4'  +'='+ '{"k":nul  }'          );
+    StrL.Add('bad value: not keyword 5'  +'='+ '{"k":tru  }'          );
+    // key bad formats
+    StrL.Add('bad key: no key'           +'='+ '{"value"}'            );
+    StrL.Add('bad key: not closed 1'     +'='+ '{"k:"value"}'         );
+    StrL.Add('bad key: not closed 2'     +'='+ '{"key:"value"}'       );
+    StrL.Add('bad key: not opened'       +'='+ '{k":"value"}'         );
+    StrL.Add('bad key: duplicated 1'     +'='+ '{"k":1,"a":2,"a":3}'  );
+    StrL.Add('bad key: duplicated 2'     +'='+ '{"o":{"a":1,"a":2}}'  );
+    // object bad formats
+    StrL.Add('bad object: not closed 1'  +'='+ '{'                    );
+    StrL.Add('bad object: not closed 2'  +'='+ '{"k":"value"'         );
+    StrL.Add('bad object: bi closed 1'   +'='+ '{"k":"value"}}'       );
+    StrL.Add('bad object: bi closed 2'   +'='+ '{"k":[{"k":"v"}}]}'   );
+    StrL.Add('bad object: wrong close'   +'='+ '{"k":{"key":"value"]}');
+    // array bad formats
+    StrL.Add('bad array: not closed 1'   +'='+ '["1","2"'             );
+    StrL.Add('bad array: not closed 2'   +'='+ '{"k":["1","2"}'       );
+    StrL.Add('bad array: bi closed 1'    +'='+ '{"k":["1","2"]]'      );
+    StrL.Add('bad array: wrong item'     +'='+ '{"k":["key":"value"]}');
+    StrL.Add('bad array: wrong close'    +'='+ '{"k":["1","2"}}'      );
+    // json inside a json
+    StrL.Add('bad value: unescaped json' +'='+ '{"k":"{"key":"value"}"}');
+    // unknown escape
+    StrL.Add('bad value: unknown escape' +'='+ '{"k":"aa \x aa"}'     );
+    StrL.Add('bad value: invalid escape' +'='+ '{"k":"ab\"}'          );
+    StrL.Add('bad value: bad u escape 1' +'='+ '{"k":"\u"}'           );
+    StrL.Add('bad value: bad u escape 2' +'='+ '{"k":"\u000"}'        );
+    StrL.Add('bad value: bad u escape 3' +'='+ '{"k":"\u0FaX"}'       );
+    // check
+    for i:=0 to StrL.Count-1 do begin
+      //sName := //Trim( StrL.Names[i] );
+      sName :=  trim(StrL[i]);
+      //writ(sname)
+      sTest := Trim( StrL.Values[sName] );
+      if ( N.Check(sTest, false) ) then
+      begin
+        Msg := Msg + #13#10 + sIndent + 'Expected to fail but pass: ' + sName;
+        anyPass := True;
+      end;
+    end;
+    // if any passed, report fail
+    Result := not anyPass;
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  StrL.Free;
+  N.Free;
+end;
+
+function Test11(out Msg: string): Boolean;
+var
+  StrL: TStringList;
+  i: Integer;
+  N: TMcJsonItem;
+  anyFail: Boolean;
+  sName, sTest: string;
+begin
+  Msg := 'Test 11: valid or unusual JSON';
+  StrL := TStringList.Create;
+  N := TMcJsonItem.Create;
+  anyFail := False;
+  try
+    // keys
+    StrL.Add('key: empty'            +'='+ '{"":"value"}'               );
+    StrL.Add('key: keyword'          +'='+ '{"{":"value"}'              );
+    // values
+    StrL.Add('value: alone'          +'='+ '"k"'                        );
+    StrL.Add('value: leading zero 1' +'='+ '{"k": 0 }'                  );
+    StrL.Add('value: leading zero 2' +'='+ '{"k": 0.1234}'              );
+    // objects
+    StrL.Add('object: empty'         +'='+ '{}'                         );
+    StrL.Add('object: empty w key'   +'='+ '{"o": { }}'                 );
+    // arrays
+    StrL.Add('array: empty no key'   +'='+ '[]'                         );
+    StrL.Add('array: empty w key'    +'='+ '{"a": [ ]}'                 );
+    StrL.Add('array: empty'          +'='+ '{"k":[]}'                   );
+    StrL.Add('array: no root'        +'='+ '[1,2]'                      );
+    StrL.Add('array: bi openned'     +'='+ '{"k":[["1","2"]]}'          );
+    // json inside a json
+    StrL.Add('value: escaped json'   +'='+ '{"k":"{\"key\":\"value\"}"}');
+    // check
+    for i:=0 to StrL.Count-1 do begin
+      sName := Trim( StrL.Names[i]      );
+      sTest := Trim( StrL.Values[sName] );
+      //writeln(stest)
+      if ( not N.Check(sTest, false) ) then  begin
+        Msg := Msg + #13#10 + sIndent + 'Expected to pass but fail: ' + sName;
+        anyFail := True;
+      end;
+    end;
+    // if any fail, report fail
+    Result := not anyFail;
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  StrL.Free;
+  N.Free;
+end;
+
+function Test12(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 12: type transformations';
+  N := TMcJsonItem.Create;
+  try
+    Result := True;
+    // object and arrays
+    N.AsJSON := '{ "k1": ["1", "2"], "k2": {"1": "a", "2": "b"} }';
+    N['k1'].ItemType := jitObject;
+    N['k2'].ItemType := jitArray ;
+    Result := Result and (N['k1'].ItemType           = jitObject)
+                     and (N['k1']['0'].AsString      = '1'      )
+                     and (N['k1']['1'].AsString      = '2'      )
+                     and (N['k2'].ItemType           = jitArray )
+                     and (N['k2'].Items[0].AsString  = 'a'      )
+                     and (N['k2'].Items[1].AsString  = 'b'      );
+    // array and value setters
+    N.AsJSON := '{ "a": ["1", "2"]}';
+    N['a'].AsInteger := 1;
+    Result := Result and (N.AsJSON = '{"a":[1,1]}');
+    N['a'].AsNumber := 1.1;
+    Result := Result and (N.AsJSON = '{"a":[1.1,1.1]}');
+    N['a'].AsString := 'str';
+    Result := Result and (N.AsJSON = '{"a":["str","str"]}');
+    N['a'].AsBoolean := True;
+    Result := Result and (N.AsJSON = '{"a":[true,true]}');
+    N['a'].AsNull := 'null';
+    Result := Result and (N.AsJSON = '{"a":[null,null]}');
+    // object and value setters
+    N.AsJSON := '{ "o": {"k1":"v1", "k2":"v2"}}';
+    N['o'].AsInteger := 1;
+    Result := Result and (N.AsJSON = '{"o":{"k1":1,"k2":1}}');
+    N['o'].AsNumber := 1.1;
+    Result := Result and (N.AsJSON = '{"o":{"k1":1.1,"k2":1.1}}');
+    N['o'].AsString := 'str';
+    Result := Result and (N.AsJSON = '{"o":{"k1":"str","k2":"str"}}');
+    N['o'].AsBoolean := True;
+    Result := Result and (N.AsJSON = '{"o":{"k1":true,"k2":true}}');
+    N['o'].AsNull := 'null';
+    Result := Result and (N.AsJSON = '{"o":{"k1":null,"k2":null}}');
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test13(out Msg: string): Boolean;
+var
+  N, M: TMcJsonItem;
+  i, idx: Integer;
+begin
+  Msg := 'Test 13: Save and Load using files';
+  N := TMcJsonItem.Create();
+  M := TMcJsonItem.Create();
+  try
+    Result := True;
+    // create a simple object.
+    N.AsJSON := '{"i": 123}';
+    // now add a array of objects
+    N.Add('array').ItemType := jitArray;
+    for i := 1 to 2 do
+      N['array'].Add('').AsJSON := '{"k'+IntToStr(i)+'": "ç'+IntToStr(i)+'"}';
+    // save to file (not Human readable and UTF-8)
+    N.SaveToFile('test13.json', true, true);
+    // change N using IndexOf
+    idx := N.IndexOf('array');
+    if (idx >= 0) then
+      N.Delete(idx);
+    // load from file (default UTF-8 convertion)
+    M.LoadFromFile('test13.json', false);
+    // check before and after delete
+    Result := Result and (N.AsJSON = '{"i":123}'                                  )
+                     and (M.AsJSON = '{"i":123,"array":[{"k1":"ç1"},{"k2":"ç2"}]}');
+    // load a Ansi file (no convertion to UTF-8 is needed)
+    M.LoadFromFile('test13-Ansi.json', true);
+    Result := Result and (M['ansi'].AsString = 'ãçüö');
+    // load a UTF-8 file (default UTF-8 convertion)
+    M.LoadFromFile('test13-UTF8.json', true);
+    Result := Result and (M['utf8'].AsString = 'ãçüö');
+    // load a UTF-8 file with BOM (default UTF-8 convertion)
+    M.LoadFromFile('test13-UTF8-BOM.json', true);
+    Result := Result and (M['utf8'].AsString = 'ãçüö');
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+  M.Free;
+end;
+
+function Test14(out Msg: string): Boolean;
+var
+  N, M, P, Q: TMcJsonItem;
+begin
+  Msg := 'Test 14: constructors';
+  N := nil;
+  M := nil;
+  P := nil;
+  Q := nil;
+  try
+    Result := True;
+    // constructor empty
+    N := TMcJsonItem.Create();
+    Result := Result and (N.AsJSON = '');
+    // constructor by type
+    Q := TMcJsonItem.Create0(jitArray);
+    Q.Add('').AsInteger := 1;
+    Q.Add('').AsInteger := 2;
+    Result := Result and (Q.AsJSON = '[1,2]');
+    // constructor by code
+    M := TMcJsonItem.Create2('{"i": 123}');
+    Result := Result and (M.AsJSON = '{"i":123}');
+    // constructor copy
+    P := TMcJsonItem.Create1(M);
+    Result := Result and (M.AsJSON = '{"i":123}')
+                     and (P.AsJSON = '{"i":123}');
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+  M.Free;
+  P.Free;
+  Q.Free;
+end;
+
+function Test15(out Msg: string): Boolean;
+var
+  N, M, P, Q: TMcJsonItem;
+begin
+  Msg := 'Test 15: Copy, Clone, IsEqual, Remove functions';
+  N := TMcJsonItem.Create();
+  M := TMcJsonItem.Create();
+  P := nil;
+  Q := nil;
+  try
+    Result := True;
+    // constructor empty
+    N.AsJSON := '{"i": 123}';
+    M.Copy(N);
+    M.Add('k').AsString := 'v';
+    P := M.Clone;
+    P.Delete(0);
+    Q := P.Clone;
+    Result := Result and (N.AsJSON = '{"i":123}'        )
+                     and (M.AsJSON = '{"i":123,"k":"v"}')
+                     and (P.AsJSON = '{"k":"v"}'        )
+                     and (Q.IsEqual(P)                  );
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+  M.Free;
+  P.Free;
+  Q.Free;
+end;
+
+
+//7/type
+  //EMcJsonException = class(Exception);
+
+function Test16(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+  i: Integer;
+  anyPass: Boolean;
+  McJsonException: EMcJsonException;
+begin
+  Msg := 'Test 16: exceptions';
+  N := TMcJsonItem.Create();
+  Result  := True;
+  anyPass := False;
+  for i := 1 to 9 do
+  begin
+    try
+      N.AsJSON := '{"s": "123a"}';
+      // Exception Object reference is nil
+      if (i = 1) then
+      begin
+        N['not'].AsInteger;
+        anyPass := True;
+      end
+      else if (i = 2) then
+      begin
+        //N.Path('s/not').AsInteger;
+        anyPass := True;
+      end
+      else if (i = 3) then
+      begin
+        N['s'].Items[1].AsInteger;
+        anyPass := True;
+      end
+      // Exception Invalid item type
+      else if (i = 4) then
+      begin
+        N['s'].AsObject;
+        anyPass := True;
+      end
+      // Exception Can't convert item "%s" with value "%s" to "%s"
+      else if (i = 5) then
+      begin
+        N['s'].AsInteger;
+        anyPass := True;
+      end
+      // Exception Can't convert item "%s" to "%s"
+      else if (i = 6) then
+      begin
+        N.AsJSON := '{"n": null}';
+        N['n'].AsInteger;
+        anyPass := True;
+      end
+      // Exception Duplicate key "%s"
+      else if (i = 7) then
+      begin
+        N.CheckException('{"k":"v", "k":"v"}',false);
+        anyPass := True;
+      end
+      // Exception Error while parsing text: "%s" at pos "%s"
+      else if (i = 8) then
+      begin
+        N.AsJSON := '{"n"[:null}';
+        anyPass := True;
+      end
+      // Exception Error while parsing text: "%s" at pos "%s"
+      else if (i = 9) then begin
+        N.AsJSON := '{"n":nul}';
+        anyPass := True;
+      end;
+    except
+      //on E: Exception do
+      //McJsonException:= EMcJsonException.create
+      begin
+        Msg := Msg + #13#10 + sIndent + 'Error: ' + 'McJsonException.message';
+        Result := Result and (not anyPass);
+      end;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test17(out Msg: string): Boolean;
+var
+  N, item: TMcJsonItem;
+begin
+  Msg := 'Test 17: enumerators';
+  N    := TMcJsonItem.Create;
+  item := nil;
+  try
+    N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
+    // use enumerator to browse values.
+  //  for item in N['o'] do    fix
+    //  item.AsJSON;
+    // check final value
+    item.asjson;
+    Result := (item.AsString = 'v2');
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test18(out Msg: string): Boolean;
+var
+  Obj, ChildObj: TMcJsonItem;
+begin
+  Msg := 'Test 18: example like JsonDataObjects';
+  Obj := TMcJsonItem.Create;
+  try
+    // access (automatic creation as in JDO)
+    Obj.S['foo'] := 'bar';
+    Obj.S['bar'] := 'foo';
+    // array creation, Obj is the owner of 'array'
+    Obj.A['array'].Add('').AsInteger := 10;
+    Obj.A['array'].Add('').AsInteger := 20;
+    // object creation, 'array' is the owner of ChildObj
+    ChildObj := Obj['array'].Add2(jitObject);
+    ChildObj.D['value'] := 12.3;
+    // array creation, ChildObj is the owner of 'subarray'
+    ChildObj.A['subarray'].Add('').AsInteger := 100;
+    ChildObj.A['subarray'].Add('').AsInteger := 200;
+    Result := (Obj.AsJSON = '{"foo":"bar","bar":"foo","array":[10,20,{"value":12.3,"subarray":[100,200]}]}');
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  Obj.Free;
+end;
+
+function Test19(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 19: At() shortener for array item access';
+  N := TMcJsonItem.Create;
+  Result := True;
+  try
+    // how to access a at pos 1.
+    N.AsJSON := '{"a": [1, 2, 3]}';
+    Result := Result and (N['a'].Items[1].AsInteger = 2);
+    Result := Result and (N.At1('a',1).AsInteger     = 2);
+    // how to access k2 at pos 1.
+    N.AsJSON := '{"a": [{"k1":1,"k2":2},{"k1":10,"k2":20}]}';
+    Result := Result and (N['a'].Items[1].Values['k2'].AsInteger = 20);
+    Result := Result and (N['a'].Items[1]['k2'].AsInteger        = 20);
+    Result := Result and (N['a'].At(1,'k2').AsInteger            = 20);
+    // other uses
+    N.AsJSON := '{"k1":1,"k2":2,"k3":3,"k4":4}';
+    Result := Result and (N['k3'].AsInteger    = 3);
+    Result := Result and (N.Items[2].AsInteger = 3);
+    Result := Result and (N.At(2,'').AsInteger    = 3);
+    Result := Result and (N.At1('k3',-1).AsInteger = 3);
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test20(out Msg: string): Boolean;
+var
+  N, M: TMcJsonItem;
+begin
+  Msg := 'Test 20: key paths passed';
+  N   := TMcJsonItem.Create;
+  Result := True;
+  try
+    N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
+    // get second object using path of keys.
+    M := N.Path('o/k2');
+    Result := Result and (M.AsString = 'v2');
+    M := N.Path('/o/k2');
+    Result := Result and (M.AsString = 'v2');
+    M := N.Path('o/k2/');
+    Result := Result and (M.AsString = 'v2');
+    M := N.Path('/o/k2/');
+    Result := Result and (M.AsString = 'v2');
+    M := N.Path('\o\k2\');
+    Result := Result and (M.AsString = 'v2');
+    M := N.Path('o.k2');
+    Result := Result and (M.AsString = 'v2');
+    // test invalid paths
+    M := N.Path('o.k3');
+    Result := Result and (M = nil);
+    M := N.Path('p');
+    Result := Result and (M = nil);
+    M := N.Path('p.o');
+    Result := Result and (M = nil);
+    M := N.Path('p.k1');
+    Result := Result and (M = nil);
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test21(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 21: check methods';
+  N   := TMcJsonItem.Create;
+  Result := True;
+  try
+    // bad JSON: key duplicated.
+    N.AsJSON := '{"k":1, "k":2}';
+    // check silently
+    Result := Result and (N.Check(N.AsJSON, false) = False);
+    // check with exception capture
+    try
+      Result := Result and (N.CheckException(N.AsJSON, false) = False);
+    except
+      //on E: Exception do
+      begin
+        Msg := Msg + #13#10 + sIndent + 'Expected: ' + 'E.Message';
+        Result := Result and True;
+      end;
+    end;
+
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+
+function Test22(out Msg: string): Boolean;
+var
+  N, M, I: TMcJsonItem;
+begin
+  Msg := 'Test 22: array of objects';
+  N   := TMcJsonItem.Create;
+  M   := TMcJsonItem.Create;
+  Result := True;
+  try
+    // array of objects.
+    N.AsJSON := '{"l":[ {"a":{"ka":"va"}}, {"b":{"kb":"vb"}} ], "s":"b"}';
+    // mount a equal json object.
+    M.Add1('l', jitArray);
+    I := M['l'].Add1('a', jitObject); I := I['a']; I.S['ka'] := 'va';
+    I := M['l'].Add1('b', jitObject); I := I['b']; I.S['kb'] := 'vb';
+    M.Add('s').AsString := 'b';
+    // check
+    I := M['l'].Values['b'];// Items[1];
+    Result := Result and ( N.AsJSON = M.AsJSON            );
+    Result := Result and ( I.AsJSON = '{"b":{"kb":"vb"}}' );
+    Result := Result and ( I['b'].HasKey('kb') = True     );
+  except
+    //on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + 'E.Message';
+      Result := False;
+    end;
+  end;
+  N.Free;
+  M.Free;
+end;
+
+function Test99(out Msg: string): Boolean;
+var
+  Json: TMcJsonItem;
+  i: Integer;
+begin
+  Msg := 'Test: Github readme.md content';
+  Json := TMcJsonItem.Create();
+  try
+    try
+      // add some pairs.
+      Json.Add('key1').AsInteger := 1;
+      Json.Add('key2').AsBoolean := True;
+      Json.Add('key3').AsNumber  := 1.234;
+      Json.Add('key4').AsString  := 'value 1';
+      // add an array
+      Json.Add1('array', jitArray);
+      for i := 1 to 3 do
+        Json['array'].Add('').AsInteger := i;
+      // save a backup to file
+      if (Json['array'].Count = 3) then
+        Json.SaveToFile('test99.json', true, true);
+      // remove an item
+      Json.Delete1('array');
+      // oops, load the backup
+      if (Json.Count = 4) then
+        Json.LoadFromFile('test99.json', true);
+      // test final result
+      Result := (Json.AsJSON = '{"key1":1,"key2":true,"key3":1.234,"key4":"value 1","array":[1,2,3]}');
+    except
+      Result := False;
+    end;
+  finally
+    Json.Free;
+  end;
+end;
+
+
+type
+  TTTest = function(out Msg: string): Boolean;
+
+
+procedure JCheck(Test: TTTest; var Passed, Failed: Integer);
+var
+  S: string;
+begin
+  if Test(S) then begin
+    Inc(Passed);
+    WriteLn('[PASS] '+ S);
+  end else begin
+    Inc(Failed);
+    WriteLn('[FAIL] '+ S);
+  end;
+end;
+
+
+
+
+
+//---------------- #Main routine ----------------
+// Unlike Free Pascal, Delphi does not require
+//   an @ sign before the function names.
+
+ var sw : TStopWatch;   uc4: ucs4char;
+     elapsedMilliseconds : cardinal;    idpeer: tidpeerthread;   idc: Tidcontext;
+     golmain: TGOLMainForm;    auc: TAutomataCell;    alist : TStrings;
+     lformatSettings: TformatSettings;  pp:TProcessPriority;  instr, ResStr: string;
+     rexs: regexprstring;    ab: TBytes;     fstrs: TFastStringStream;
+     jclfms: TJclFileMappingStream;  t1, t2: cardinal;  aol: olevariant;  bmp: TBitmap;  arect: trect;
+     AContext : TIdContext; AResponseInfo : TIdHTTPResponseInfo;   ws: TWebsocket;
+     acoefs: TDoubleArray; {was Real}  tintarr: TIntegerArray;
+                   correl_coef: Double;  lpi: TLogicalProcessorInformation;
+     DataBase: String;
+     EmailAddress : String;
+     Username: String;   
+     var
+  TotalPassed, TotalFailed: Integer;
+//begin
+  //ReportMemoryLeaksOnShutdown := true;
+
+ 
+          
+begin  //@main
+   setdebugcheck(true);
+  // maxform1.darkcode;
+{  WriteLn( 'sqrt(2)');
+  CalcContFrac( @a_sqrt2, @b_sqrt2, 1E-20, 1000);
+  WriteLn( 'e');
+  CalcContFrac( @a_e, @b_e, 1E-20, 1000);
+  WriteLn( 'pi');
+  CalcContFrac( @a_pi, @b_pi, 1E-20, 1000);
+  WriteLn( 'pi (alternative formula)');
+  CalcContFrac( @a_pi_alt, @b_pi_alt, 1E-20, 1000);
+  //tprocesspriorities  }
+  
+  sw:= TStopWatch.Create() ;
+  try
+    sw.Start;
+    //TimeOutThisFunction()
+    //sleep(500)
+    memo2.setfocus;
+    sleep(500)
+    setkeypressed;
+    repeat until iskeypressed;
+    sw.Stop;
+    //elapsedMilliseconds:= sw.getValueStr; //ElapsedMilliseconds;
+    writeln('stopwatch test:'+sw.getValueStr);
+  finally
+    sw.Free;
+  end;
+    PerlRegEX_ExtractDemo();
+    TFractanCreate(DATA, 2);
+  //ndBeginning nrOK
+   //testTRegExprFloat();
+   //RegEX_ExtractDemo;
+   writeln('Delphi Regex Core Test');
+  Checkregex('2.334');
+  Checkregex('150.2');
+  Checkregex('0.23');
+  Checkregex('3');
+  Checkregex('3..42');
+  Checkregex('4-2.3');
+  Checkregex('e5.64');
+  Checkregex('3 145');
+  writ(itoa(ord(DecodeHTTPCommand ('put'))));
+  writ(list_modules(exepath+'maXbox5_02beta80.exe'));
+   // writ(list_modules(exepath+'maXbox5may2.exe'));
+   //writ(list_modules(exepath+'maXbox5april4.exe'));
+  maxform1.consolecode;
+  //maxform1.icon.loadfromresourcename(hinstance, 'xjicon');
+  // maxform1.icon.loadfromresourcename(hinstance, 'xjediicon');
+   // maxform1.icon.loadfromresourcename(hinstance, 'shellicon');
+  
+  maxform1.gameoflife(self);
+  
+  {with TGOLMainForm.create(self) do begin
+    //formcreate(self)
+    //formresize(self)
+    //periodtimer.enabled:= true;
+    //if Cells[ARow, ACol].IsAlive then
+    //BrushColor := clBlack
+    //show;
+    //free
+  end;   //}
+  
+  //writeln(objtostr(golmainform));
+  writeln(botostr(auc.isalive));
+  golmain:= TGOLMainForm.create(self);
+  golmain.maingrid.canvas.Brush.Color := clred;
+  golmain.formcreate(self);
+  golmain.caption:= 'is alivve';
+  golmain.periodtimer.enabled:= true;
+  //golmain.Cells[4, 5].Color := clred;
+  //if golmain.Cells[4, 5].IsAlive then
+    golmain.maingrid.canvas.Brush.Color := clred;
+    golmain.show;
+  //golmain.free;
+  
+  writ(itoa(popcount32(100000)));
+  
+    with tgps2.create(self) do begin
+      writeln('NmeaSentence '+NmeaSentence)
+      free
+    end;  
+    
+   //maxform1.unitexplorer(self);
+   
+   CSocksSelfTest();
+   //TextDegreeMinuteSecondFrmDec
+   //TDirectionsBtnGoGoogleClick(self);
+   writeln(getgeocode5('xml',ExePath+'outputmap_2cologne.xml','cathedral cologne',false));
+   writeln(version)
+   
+    with WebUtils.create do
+  begin
+    alist := TStringlist.create;
+     ParseURLEncoded( 'const data : RawByteString;', alist);
+    writeln(DecodeURLEncoded(' const src : RawByteString; start, count : Integer',1,10)) // }
+     writeln(DecodeURLEncoded1(' const src : RawByteString;',1));
+    //RegisterMethod('Function EncodeURLEncoded( const src : String) : String');  }
+    //ParseMIMEHeaderValue(' const src : RawByteString;', nil);
+   { RegisterMethod('Procedure ParseMultiPartFormData( const src, dashBoundary : RawByteString; var dest : TIMIMEBodyParts)');
+    RegisterMethod('Function DecodeHex2( p : PAnsiChar) : Integer'); }
+    HasFieldName(alist, 's; const name : String') // }
+    writeln(EncodeEncodedWord(' const s : String) : String'));
+  {  RegisterMethod('Function DateTimeToRFC822( const dt : TDateTime) : String;');    }
+     RFC822ToDateTime( 'const str : String');
+  {  RegisterMethod('Function HTMLTextEncode( const s : UnicodeString) : UnicodeString');
+    RegisterMethod('Function HTMLTextDecode( const s : UnicodeString) : UnicodeString');
+    RegisterMethod('Function HTMLCharacterDecode( p : PWideChar) : WideChar');
+    RegisterMethod('Function HTMLAttributeEncode( const s : UnicodeString) : UnicodeString');
+    RegisterMethod('Function HTMLAttributeDecode( const s : UnicodeString) : UnicodeString'); }
+    //writeln(CSSTextEncode(' const s : UnicodeString'));
+  {  RegisterMethod('Function XMLTextEncode( const s : UnicodeString; unsupportedXML10CharactersMode : Integer) : UnicodeString');}
+     writeln(XMLTextDecode( 'const s : UnicodeString) : UnicodeString'));  //}
+     IsValidCookieName( 'const s : String) : Boolean');
+    //RegisterMethod('Function IsValidCookieValue( const s : String) : Boolean');  }
+  end;
+  
+  writeln(utf8tostring2('☮ ✞ π 📌 🐞'));
+   writeln(utf8tostring('☮ ✞ π 📌 🐞'));
+   
+   //RawCodepageToMIMECharsetName
+   
+   with TAnsiStringlist.create do  begin
+      LoadFromFile1(exepath+'randimage0cop.jpg', nil);
+      // LoadFromFile(exepath+'randimage0cop.jpg');
+   
+    free
+   end; 
+   
+   writ(SafeDateTimeToInternetStr(now, false));
+   //IndyFormat
+   
+    with tfileopendialog.create(self)  do begin
+    //OptionsEx:= [ ofReadOnly];
+      //Options2:= [fdoOverWritePrompt2];
+       //Options2:= [ ofReadOnly2];
+    free;
+  end;  
+  
+    writeln(ConvertUTF16ToUTF8('☮ ✞ π 📌 🐞'))
+    writ(utf8decode((ConvertUTF16ToUTF8('☮ ✞ π 📌 🐞'))));
+      //UTF16ToUTF8
+    writeln(utf8toutf16(ConvertUTF16ToUTF8('☮ ✞ π 📌 🐞'), getcodepage))  
+     writeln(utf8toutf16(ConvertUTF16ToUTF8('°'), getcodepage)) 
+     //GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, lformatSettings)  $
+     lformatSettings:= getformatsettings5;
+     //GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, lformatSettings)  //$
+     
+     //writeln('fset '+objtostr(lformatSettings));
+     //lformatSettings.DecimalSeparator:= 'l';
+     
+     writeln('fset '+lformatSettings.DecimalSeparator)
+     
+     writeln(GetLocaleFormatSettings2string(LOCALE_SYSTEM_DEFAULT));  
+    // GetSearchRecs2(exepath, '*.txt', false, nil);
+       //GetSearchRecs(exepath, '*.txt', False, nil, nil);
+       
+      writ(bytesize2str(51638, 'B'));
+      with TALUpdateSQLClause.create do begin
+       clear; value; where;
+       free end;
+       
+       //AlUTF8removeBOM 
+       writ(alIntToHex(1001, 2));
+        writ(IntToHex(1001, 2));
+      writ(alIntTostr(1001));
+      
+      writ(botostr(ALIsInt64('123456')));
+      //AlCGIInitDefaultServerVariablesFromWebRequest
+      writ(itoa(AnsiNaturalCompareText(memo1.lines.text, memo2.lines.text)));
+      writ(roundtime2('07/05/2024',15,true));
+      //PipeToFile(Filename: string; Cmd: string; Append: boolean): boolean;
+      //PipeToFile(exepath+'maxboxerrorlog.txt','dir *.*',true);
+      //countpos
+    //  runprocess(exepath+'maxbox5.exe',  $00000080);
+    
+    { With TJclAnsiRegEx2.create do try
+    //Compile('class="?r"?>.+?href="(.+?)".*?>(.+?)<\/a>.+?class="?s"?>(.+?)<cite>.+?class="?gl"?><a href="(.+?)"><\/div><[li|\/ol]',false,false);  
+    //Exception: Bad option at 0.3682
+      //subject:= C_PI_BIG;
+      dfamode:= false;
+      options:= [ roNoUTF8Check2];
+      Compile('([</pbr>])*',false,true, true);  
+    
+    If match(memo1.lines.text,1) then begin
+      For it := 0 to captureCount -1 do
+        memo2.lines.add(captures[1]);
+    end;
+  finally free;
+  end;     //  }
+  
+    writeln(getMatchString('([AG]{3})CCGG\1','BBBAGGCCGGAGGHHHH'));  
+   writeln(getMatchString2('([AG]{3})CCGG\1','BBBAGGCCGGAGGHHHH'));  
+   writeln(getMatchString3('([AG]{3})CCGG\1','BBBAGGCCGGAGGHHHH'));  
+   
+   with TRegExpr.create do begin //HISUtils.RegExpr;
+   // Set regular expression pattern that specifies an e-mail address
+     Expression:='\w+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,6}';
+   // Execute search
+     ResStr:='';
+     rexs:= 'Please e-mail us at support@mycompany.com or to sales@mycompany.com';
+     writeln(botostr(Exec0((rexs))));
+   if Exec0((rexs)) then Repeat
+     ResStr:= ResStr + Match[0] + '; ';
+   Until not ExecNext;
+   writeln('rex back: '+utf8decode(resstr))
+  free;
+  end;   
+   
+   // fstrs:= TFastStringStream.create('ab');
+ (* with TFastStringStream.create('') do begin
+    //loadfromfile(exepath+'maXbox5.exe');
+    //writ(SHA256ToStr(CalcSHA2561(fstrs)));
+    Free;
+   end; //*)
+   
+   t1:= GetTickCount;
+   jclfms:= TJclFileMappingStream.create(exepath+'maXbox5.exe', fmOpenRead );
+    //icsfs.loadfromfile(exepath+'maXbox5.exe');
+    //writeln('temp filename '+jclfms.filename);
+  //  writ(SHA256ToStr(CalcSHA2561(jclfms)));
+    jclfms.free;
+    writeln('JclTempFileStream time: '+IntToStr(GetTickCount-t1)+' ms');
+    writ(itoa(floor(-3.4)));
+    writ(itoa(floor(13.4)));
+    writ('vardatasize '+itoa(vardatasize(aol)));
+    memo2.text;
+    //7/memo1 
+    //regex 
+    writeln('mhandle '+itoa(maxform1.handle));        
+    //function rotl(lhs, rhs: Uint32): Uint32;  
+     writ(itoa(rotl(01234, 56789)));
+      writ(itoa(rotr(01234, 56789)));
+    with TIdSimpleWebSocketClient.create(self) do begin
+          writ(generateWebSocketKey);
+          //writeTextSync('test', @TWSFunc2)
+          // writeTextSync('test', nil)
+           //writeText('test')
+       free; end;  
+       
+ (*
+  bmp := TBitmap.Create;
+  try
+    
+    //bmp.SetSize(arect.left, arect.Bottom);
+    //BitBlt(bmp.canvas.Handle, 0, 0, bmp.Width, bmp.Height, canvas.Handle, 0, 0, SRCCOPY);
+    bmp.loadfromresourcename(hinstance, 'cisalpin')
+    bmp.SaveToFile(exepath+'examples\cisalphim.bmp');
+    antialiaze(bmp)
+    openfile(exepath+'examples\cisalphim.bmp');
+  finally
+    bmp.Free;  
+  end;  *) 
+  
+ {AResponseInfo:= TIdHTTPResponseInfo.create1(nil, nil, nil);
+   AContext:= TIdContext.create;
+   ws:= TWebsocket.create('thisti', acontext, AResponseInfo);
+   with TWebsocket.create ('thisti', acontext, AResponseInfo) do begin
+          //writ(generateWebSocketKey);
+          iswebsocket(acontext, nil, aresponseinfo, ws)
+          //writeTextSync('test', @TWSFunc2)
+          // writeTextSync('test', nil)
+           //writeText('test')
+       free; end;  //}
+       //pparameters
+       //parameters2
+       
+       with TProcess.create(self) do begin
+         environment.add('');
+         //parameters2.add('');
+         free; end;
+         
+      //glxCompileProgram   
+   writ(MakeSecureURL('https://github.com/adaloveless/commonx/blob/master/webstring.pas'));
+   writ(botostr(IsValidURL('https://github.com/adaloveless/commonx/blob/master/webstring.pas')));
+   //((writ(gethexdata(memo1.text));
+   //writ(gethexdata('00000020'));
+  //writ(converthex(memo2.text, 1024));
+  //bintohExfile
+  //write(BinToHexFile(exepath+'examples\slucsave21.txt', 5));
+  setlength(acoefs, 2);
+  acoefs:= [0,8]; correl_coef:= 5.56;
+ (PolyFit2([23.5],[3.6],acoefs,correl_coef,10,2));
+ //findrecursive2
+ 
+ //function GetNumberOfPhysicalProcessors: integer;
+ //function GetNumberOfLogicalProcessors: integer;
+  writeln('GetNumberOfPhysicalProcessors: '+itoa( GetNumberOfPhysicalProcessors));
+ writeln('GetNumberOfLogicalProcessors: '+itoa( GetNumberOfLogicalProcessors));
+ writeln(DebugHeapStatus);
+ writeln('GetCPUCount: '+itoa( GetCPUCount)); 
+ 
+ writeln(itoa(GetLogicalProcessorInfo.ProcessorCoreCount));
+ //FileOpenX FileCreateX
+ GetKeyboardShiftState  
+ //CopyFileX
+ //ComplyFilePath
+   //https://stackoverflow.com/questions/46534011/delphi-parse-json-array-or-array
+  EmailAddress := getJsonData(JSONDATA, 'b', 'email');
+  writeln(EmailAddress);
+  Username := getJsonData(JSONDATA, 'a', 'username');
+  writeln(Username);
+  
+  //writ(McJsonEscapeString(JSONDATA, jetNone));
+  
+   TotalPassed := 0;
+  TotalFailed := 0;
+
+  // [PASS] [
+  sIndent := '       ';
+  
+  JCheck(@Test01, TotalPassed, TotalFailed);
+  JCheck(@Test02, TotalPassed, TotalFailed);
+  JCheck(@Test03, TotalPassed, TotalFailed);
+  JCheck(@Test04, TotalPassed, TotalFailed);
+  JCheck(@Test05, TotalPassed, TotalFailed);
+  JCheck(@Test06, TotalPassed, TotalFailed);
+  JCheck(@Test07, TotalPassed, TotalFailed);
+   JCheck(@Test08, TotalPassed, TotalFailed);
+   JCheck(@Test09, TotalPassed, TotalFailed); 
+ // JCheck(@Test10, TotalPassed, TotalFailed);  
+  JCheck(@Test11, TotalPassed, TotalFailed); 
+  JCheck(@Test12, TotalPassed, TotalFailed);  
+  JCheck(@Test13, TotalPassed, TotalFailed);  
+  JCheck(@Test14, TotalPassed, TotalFailed);  
+  JCheck(@Test15, TotalPassed, TotalFailed);   
+   JCheck(@Test16, TotalPassed, TotalFailed); 
+  //JCheck(@Test17, TotalPassed, TotalFailed);    must fix
+  JCheck(@Test18, TotalPassed, TotalFailed);   
+  JCheck(@Test19, TotalPassed, TotalFailed);   
+  JCheck(@Test20, TotalPassed, TotalFailed);  
+  JCheck(@Test21, TotalPassed, TotalFailed);             
+  JCheck(@Test22, TotalPassed, TotalFailed);
+  JCheck(@Test99, TotalPassed, TotalFailed);
+  
+  WriteLn('');
+  
+  if TotalFailed > 0 then
+    WriteLn(itoa(TotalFailed)+ ' tests FAILED')
+  else
+    WriteLn('All tests PASSED');
+ 
+  //GetSearchRecs2
+   tintarr:= BalancedWorkload(14,5)
+   tintarr:= Splitinteger(14,5)
+   writ(dnslookup('www.ibm.ch'));
+ 
+end.
+
+Ref:  --------------------------------------------------------
+
+type
+  TProcessPriority = (ptLow         = $00000040,
+                      ptBelowNormal = $00004000,
+                      ptNormal      = $00000020,
+                      ptAboveNormal = $00008000,
+                      ptHigh        = $00000080,
+                      ptRealtime    = $00000100);
+
+https://github.com/corneliusdavid/ccLib/blob/master/Source/misc/uSearchRecList.pas
+ <examples>
+///   GetSearchRecs(LogFolder, '*.log', False, nil, <br />procedure (FileInfo:
+///   TSearchRec) <br />begin <br />// log files older than 90 days to the
+///   recycle bin <br />if FileInfo.TimeStamp &lt; Now - 90 then <br />
+///   FileDelete(TPath.Combine(LogFolder, FileInfo.Name), True); <br />end); <br />
+
+procedure GetSearchRecs2(const Path, Pattern: string; const Recursive: Boolean; PathStatusProc: TPathStatusProc);
+{ adapted from TDirectory.WalkThroughDirectory in System.IOUtils }
+const
+  FCCurrentDir: string = '.';
+  FCParentDir: string = '..';
+var
+  SearchRec: TSearchRec;
+  Stop: Boolean;
+begin
+  if FindFirst(TPath.Combine(Path, '*'), faAnyFile, SearchRec) = 0 then
+    try
+      repeat
+        if SearchRec.Attr and System.SysUtils.faDirectory <> 0 then begin
+          // if a directory, optionally recurse into it
+          if Recursive and (SearchRec.Name <> FCCurrentDir) and (SearchRec.Name <> FCParentDir) then begin
+            GetSearchRecs2(TPath.Combine(Path, SearchRec.Name), Pattern, Recursive, PathStatusProc);
+            // notify the calling method about the change in path
+            if Assigned(PathStatusProc) then
+              PathStatusProc(Path, Stop);
+            // optionally halt the searching
+            if Stop then
+              Break;
+          end;
+        end else if TPath.MatchesPattern(SearchRec.Name, Pattern, False) then begin
+          // found a file matching our pattern, let the calling method have it
+          inc(cnt);
+          maxform1.memo2.Lines.Add(inttostr(cnt)+': '+searchrec.Name +' - '+inttostr(searchrec.Size));
+         end;    //try
+      until sysutils.FindNext(SearchRec) <> 0;
+            //except; end;
+    finally
+      sysutils.FindClose(SearchRec);
+      cnt:= 0;
+    end;
+end;
+
+
+function SafeDateTimeToInternetStr(const Value: TDateTime; const AIsGMT: Boolean): string;
+
+  function FastLocalDateTimeToGMT(const Value: TDateTime; const AUseGMTStr: Boolean = False) : String;
+  var
+    wDay, wMonth, wYear: Word;
+   fs : TFormatSettings;
+  begin
+   GetLocaleFormatSettings(GetThreadlocale, fs);
+    // It's fast because it uses the global gOffsetFromUTC instead of asking windows for it each time.
+    DecodeDate(Value, wYear, wMonth, wDay);
+    Result := indyFormat('%s, %d %s %d %s %s',    {do not localize}
+                [fs.ShortDayNames[DayOfWeek(Value)], wDay, fs.ShortMonthNames[wMonth],
+                    wYear, FormatDateTime('HH":"nn":"ss', Value), {do not localize}
+                      UtcOffsettoStr(gOffsetFromUTC, AUseGMTStr)]);
+  end;
+begin
+  try
+    Result := FastLocalDateTimeToGMT(Value, AIsGMT);
+  except
+    Result := 'Fri, 17 Nov 1961 08:00:00 GMT';
+  end;
+end;
+
+  if you can't you must - if you must you can.   Recode Tech
+
+ 17/91 78/85 19/51 23/38 29/33 77/29 95/23 77/19 1/17 11/13 13/11 15/14 15/2 55/1 
+
+0: 2
+1: 15
+2: 825
+3: 725
+4: 1925
+5: 2275
+6: 425
+7: 390
+8: 330
+9: 290
+10: 770
+11: 910
+12: 170
+13: 156
+14: 132
+ mX5 executed: 15/01/2024 16:11:12  Runtime: 0:0:2.772  Memload: 66% use
+  mX5 executed: 15/01/2024 16:19:00  Runtime: 0:0:2.715  Memload: 64% use
+ mX5 executed: 15/01/2024 13:57:30  Runtime: 0:0:2.688  Memload: 63% use
+
+sqrt(2)
+  1.41421356237309470 after 27 terms (converged)
+e
+  2.71828182845904510 after 20 terms (converged)
+pi
+  3.14159265383979520 after 1000 terms (too many terms)
+pi (alternative formula)
+  3.14159265358979260 after 29 terms (converged)
+ mX5 executed: 14/12/2023 12:13:56  Runtime: 0:0:2.104  Memload: 73% use
+RemObjects Pascal Script. Copyright (c) 2004-2024 by RemObjects Software & maXbox5
+sqrt(2)
+  1.41421356237309505 after 27 terms (converged)
+e
+  2.71828182845904524 after 20 terms (converged)
+pi
+  3.14159265383979293 after 1000 terms (too many terms)
+pi (alternative formula)
+  3.14159265358979324 after 29 terms (converged)
+ mX4 executed: 14/12/2023 11:30:32  Runtime: 0:0:1.978  Memload: 30% use
+
+
+sqrt(2)
+  1.41421356237309505 after 27 terms (converged)
+e
+  2.71828182845904524 after 20 terms (converged)
+pi
+  3.14159265383979293 after 1000 terms (too many terms)
+pi (alternative formula)
+  3.14159265358979324 after 29 terms (converged)
+ mX4 executed: 23/02/2023 17:48:58  Runtime: 0:0:1.689  Memload: 40% use
+
+sqrt(2)
+  1.41421356237309505 after 27 terms (converged)
+e
+  2.71828182845904524 after 20 terms (converged)
+pi
+  3.14159265383979293 after 1000 terms (too many terms)
+pi (alternative formula)
+  3.14159265358979324 after 29 terms (converged)
+
+{ compile-time registration functions }
+procedure SIRegister_TDataSetUtils(CL: TPSPascalCompiler);
+procedure SIRegister_DataSetUtils(CL: TPSPascalCompiler);
+
+{ run-time registration functions }
+procedure RIRegister_TDataSetUtils(CL: TPSRuntimeClassImporter);
+procedure RIRegister_DataSetUtils(CL: TPSRuntimeClassImporter);
+
+
+Doc:  we download a script-file in powershell with wget Invoke-WebRequest open the file to check
+      the content, then execute the script and get the result back to maXbox-console as memo2.
+      Hint: needs a \examples dir otherwise 
+      
+      HttpRESTConnectionIndy
+
+   https://rapidapi.com/collection/list-of-free-apis               
+
+   https://wiki.delphi-jedi.org/wiki/JCL_Help:Execute@string@string@Boolean@PBoolean
+   https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+
+    writeln(GETDOSOutput('cmd.exe /c wmic cpu get architecture','C:\'));
+    writeln(GETDOSOutput('cmd.exe /c wmic cpu get name','C:\'));
+    //to monitor tcp spyware over PID - process ID
+    memo2.setFocus;
+    repeat
+      writeln(GETDOSOutput('cmd.exe /c netstat -o','C:\'));
+      memo2.color:= clsilver;
+      sleep(2000)
+      memo2.color:= clyellow;    
+    until isKeyPressed;  
+    memo2.color:= clwhite;    
+    writeln(SysErrorMessage(GetLastError))
+
+Passwort checker? https://haveibeenpwned.com
+https://dnslytics.com/spf-lookup  
+
+procedure RunDosInMemo(DosApp: string; AMemo:TMemo);
+const
+    READ_BUFFER_SIZE = 2400;
+var
+    Security: TSecurityAttributes;
+    readableEndOfPipe, writeableEndOfPipe: THandle;
+    start: TStartUpInfo;
+    ProcessInfo: TProcessInformation;
+    Buffer: PAnsiChar;
+    BytesRead, AppRunning: DWORD;
+begin
+    Security.nLength := SizeOf(TSecurityAttributes);
+    Security.bInheritHandle := True;
+    Security.lpSecurityDescriptor := nil;
+
+    if CreatePipe({var}readableEndOfPipe, {var}writeableEndOfPipe, @Security, 0) then begin
+        Buffer := AllocMem(READ_BUFFER_SIZE+1);
+        FillChar(Start, Sizeof(Start), #0);
+        start.cb := SizeOf(start);
+
+        // Set up members of the STARTUPINFO structure.
+        // This structure specifies the STDIN and STDOUT handles for redirection.
+        // - Redirect the output and error to the writeable end of our pipe.
+        // - We must still supply a valid StdInput handle (because we used STARTF_USESTDHANDLES to swear that all three handles will be valid)
+        start.dwFlags := start.dwFlags or STARTF_USESTDHANDLES;
+        start.hStdInput := GetStdHandle(STD_INPUT_HANDLE); //we're not redirecting stdInput; but we still have to give it a valid handle
+        start.hStdOutput := writeableEndOfPipe; //we give the writeable end of the pipe to the child process; we read from the readable end
+        start.hStdError := writeableEndOfPipe;
+
+        //We can also choose to say that the wShowWindow member contains a value.
+        //In our case we want to force the console window to be hidden.
+        start.dwFlags := start.dwFlags + STARTF_USESHOWWINDOW;
+        start.wShowWindow := SW_HIDE;
+
+        // Don't forget to set up members of the PROCESS_INFORMATION structure.
+        ProcessInfo := Default(TProcessInformation);
+
+        //WARNING: The unicode version of CreateProcess (CreateProcessW) can modify the command-line "DosApp" string. 
+        //Therefore "DosApp" cannot be a pointer to read-only memory, or an ACCESS_VIOLATION will occur.
+        //We can ensure it's not read-only with the RTL function: UniqueString
+        UniqueString({var}DosApp);
+
+        if CreateProcess(nil, PChar(DosApp), nil, nil, True, NORMAL_PRIORITY_CLASS, nil, nil, start, {var}ProcessInfo) then begin
+            //Wait for the application to terminate, as it writes it's output to the pipe.
+            //WARNING: If the console app outputs more than 2400 bytes (ReadBuffer),
+            //it will block on writing to the pipe and *never* close.
+            repeat
+                Apprunning := WaitForSingleObject(ProcessInfo.hProcess, 100);
+                Application.ProcessMessages;
+            until (Apprunning <> WAIT_TIMEOUT);
+
+            //Read the contents of the pipe out of the readable end
+            //WARNING: if the console app never writes anything to the StdOutput, then ReadFile will block and never return
+            repeat
+                BytesRead := 0;
+                ReadFile(readableEndOfPipe, Buffer[0], READ_BUFFER_SIZE, {var}BytesRead, nil);
+                Buffer[BytesRead]:= #0;
+                OemToAnsi(Buffer,Buffer);
+                AMemo.Text := AMemo.text + String(Buffer);
+            until (BytesRead < READ_BUFFER_SIZE);
+        end;
+        FreeMem(Buffer);
+        CloseHandle(ProcessInfo.hProcess);
+        CloseHandle(ProcessInfo.hThread);
+        CloseHandle(readableEndOfPipe);
+        CloseHandle(writeableEndOfPipe);
+    end;
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+begin {button 1 code}
+   RunDosInMemo('chkdsk.exe c:\',Memo1);
+end;
+
+CL.AddDelphiFunction('procedure RunDosInMemo(DosApp: string; AMemo:TMemo);');
+
+ShellExecute(0, 'open', Pchar('DocumentName.pdf'), '', '', SW_SHOWNORMAL);
+
+work under Windows 7 and 8, which would start the Acrobat Reader and open the file but under Windows 10 this no longer is the case. So the next step was to update the call to use ShellExecuteEX instead.
+ShellInfo := Default(TShellExecuteInfo);
+ShellInfo.cbSize := SizeOf(TShellExecuteInfo);
+ShellInfo.lpFile := PChar(Current_Client_Documents + FileName +'.pdf');
+ShellInfo.nShow := SW_SHOWNORMAL;
+
+try
+ShellExecuteEx(@ShellInfo);
+
+The actual code will prepare the Object ShellInfo to contain all of the necessary data to start up the Acrobat Reader and display the generated PDF.
+
+ mX4 executed: 30/08/2022 16:07:02  Runtime: 0:0:2.369  Memload: 45% use
+ mX4 executed: 07/09/2022 09:07:56  Runtime: 0:0:9.906  Memload: 45% use
+ mX4 executed: 07/09/2022 10:23:00  Runtime: 0:0:9.134  Memload: 45% use
+ 
+     können.
+   
+Software & Support Media GmbH
+Schwedlerstr. 8
+60314 Frankfurt
+
+function parsejsonvalue2(JsonUTF8: string): string;
+var
+  LJSONValue: TJSONValue;
+begin
+   { convert String to JSON }
+   LJSONValue:=TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes(JsonUtf8),0);
+    result:= LJSONValue.ToString;
+ end;
+
+https://my6.code.blog/2022/09/02/webpostdata/
+https://my6.code.blog/2023/02/23/distance-and-bearing/
+
+Das Tool bietet eine umfassende Schichtplanung an und kann einfach bedient werden. F
+
+Abbildung 3 Use Case Diagram
+
+Tabelle 15 Use Case Personalbedarf erfasse
+
+https://mobadaten.net/MoBaDatenInfo/index.php?title=Trix_H0_3-Leiter_-_Deutsche_Bundesbahn_(DB,_DSG,_DBP)&DPL_arg1=IV&DPL_arg2=DB&DPL_arg3=EL&DPL_arg4=17#DBEPIV
+
+Sorry! This site is experiencing technical difficulties.
+Try waiting a few minutes and reloading.
+
+(Cannot access the database)
+
+Backtrace:
+
+#0 /var/www/html/shared/BaseWiki31/includes/libs/rdbms/loadbalancer/LoadBalancer.php(1134): Wikimedia\Rdbms\Database->reportConnectionError('Connection time...')
+#1 /var/www/html/shared/BaseWiki31/includes/libs/rdbms/loadbalancer/LoadBalancer.php(749): Wikimedia\Rdbms\LoadBalancer->reportConnectionError()
+#2 /var/www/html/shared/BaseWiki31/includes/GlobalFunctions.php(2801): Wikimedia\Rdbms\LoadBalancer->getConnection(0, Array, false)
+#3 /var/www/html/shared/BaseWiki31/includes/cache/localisation/LCStoreDB.php(45): wfGetDB(-1)
+#4 /var/www/html/shared/BaseWiki31/includes/cache/localisation/LocalisationCache.php(412): LCStoreDB->get('en', 'deps')
+#5 /var/www/html/shared/BaseWiki31/includes/cache/localisation/LocalisationCache.php(458): LocalisationCache->isExpired('en')
+#6 /var/www/html/shared/BaseWiki31/includes/cache/localisation/LocalisationCache.php(334): LocalisationCache->initLanguage('en')
+#7 /var/www/html/shared/BaseWiki31/includes/cache/localisation/LocalisationCache.php(371): LocalisationCache->loadItem('en', 'magicWords')
+#8 /var/www/html/shared/BaseWiki31/includes/cache/localisation/LocalisationCache.php(292): LocalisationCache->loadSubitem('en', 'magicWords', 'tree')
+#9 /var/www/html/shared/BaseWiki31/languages/Language.php(3177): LocalisationCache->getSubitem('en', 'magicWords', 'tree')
+#10 /var/www/html/shared/BaseWiki31/includes/MagicWord.php(352): Language->getMagic(Object(MagicWord))
+#11 /var/www/html/shared/BaseWiki31/includes/MagicWord.php(280): MagicWord->load('tree')
+#12 /var/www/html/shared/BaseWiki31/includes/parser/Parser.php(4848): MagicWord::get('tree')
+#13 /var/www/html/shared/BaseWiki31/extensions/TreeAndMenu/TreeAndMenu_body.php(24): Parser->setFunctionHook('tree', Array)
+#14 /var/www/html/shared/BaseWiki31/includes/Setup.php(948): TreeAndMenu->setup()
+#15 /var/www/html/shared/BaseWiki31/includes/WebStart.php(88): require_once('/var/www/html/s...')
+#16 /var/www/html/shared/BaseWiki31/index.php(39): require('/var/www/html/s...')
+#17 {main}
+  3.14159265358979324 after 29 terms (converged)
+ mX4 executed: 08/06/2023 12:11:46  Runtime: 0:0:1.700  Memload: 46% use
+ mX4 executed: 10/06/2023 23:24:13  Runtime: 0:0:1.705  Memload: 44% use
+ mX4 executed: 12/06/2023 23:09:00  Runtime: 0:0:1.744  Memload: 44% use
+ mX4 executed: 14/06/2023 20:58:58  Runtime: 0:0:1.774  Memload: 35% use
+ mX4 executed: 14/06/2023 22:35:00  Runtime: 0:0:1.736  Memload: 36% use                                                                                     
+ mX4 executed: 15/06/2023 08:57:25  Runtime: 0:0:1.762  Memload: 41% use
+ mX4 executed: 15/06/2023 14:13:30  Runtime: 0:0:1.755  Memload: 46% use
+ mX5🐞 executed: 16/04/2024 15:44:03  Runtime: 0:0:3.693  Memload: 83% use
+ mX5🐞 executed: 19/04/2024 13:55:19  Runtime: 0:0:3.132  Memload: 69% use
+ mX5🐞 executed: 13/05/2024 18:03:53  Runtime: 0:0:3.582  Memload: 69% use
+  mX5🐞 executed: 23/05/2024 11:26:44  Runtime: 0:0:3.564  Memload: 79% use
+  mX5🐞 executed: 15/06/2024 18:12:37  Runtime: 0:0:3.512  Memload: 69% use
+ 
+  
