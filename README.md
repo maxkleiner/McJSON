@@ -31,6 +31,48 @@ Some points of interest:
    *  [uJSON](https://sourceforge.net/projects/is-webstart/) (Delphi Web Utils)
 
 ## Examples
+### Object-Pascal for maXbox Example
+Modification of missing default parameter and overloading
+
+```pascal
+function Test99(out Msg: string): Boolean;
+var
+  Json: TMcJsonItem;
+  i: Integer;
+begin
+  Msg := 'Test: Github readme.md content ex. 99';
+  Json := TMcJsonItem.Create();
+  try
+    try
+      // add some pairs.
+      Json.Add('key1').AsInteger := 1;
+      Json.Add('key2').AsBoolean := True;
+      Json.Add('key3').AsNumber  := 1.234;
+      Json.Add('key4').AsString  := 'value 1';
+      // add an array
+      Json.Add1('array', jitArray);
+      for i := 1 to 3 do
+        Json['array'].Add('').AsInteger := i;
+      // save a backup to file
+      if (Json['array'].Count = 3) then
+        Json.SaveToFile(exepath+'examples\test99.json', true, true);
+      // remove an item
+      Json.Delete1('array');
+      // oops, load the backup
+      if (Json.Count = 4) then
+        Json.LoadFromFile(exepath+'examples\test99.json', true);
+      // test final result
+      Result := (Json.AsJSON = '{"key1":1,"key2":true,"key3":1.234,"key4":"value 1","array":[1,2,3]}');
+      writeln(formatjson(Json.AsJson));
+    except
+      Result := False;
+    end;
+  finally
+    Json.Free;
+  end;
+end;
+```
+
 ### Object-Pascal Example
 
 ```pascal
