@@ -1,0 +1,860 @@
+//****************Shell REST API Tester**************************   🐞
+program RESTcountries_Composer1_64bit_UC_51;
+
+//https://software.hixie.ch/utilities/cgi/unicode-decoder/utf8-decoder
+
+//API Endpoints v3 ☮ ✞ π 📌
+//https://restcountries.com/
+
+//http://www.softwareschule.ch/examples/alhttpclient2.txt
+//http://www.softwareschule.ch/examples/maxbox_functions.txt
+//http://www.softwareschule.ch/examples/maxbox_functions_sort.txt
+//https://github.com/apilayer/restcountries
+//http://www.softwareschule.ch/examples/json7.txt
+//https://gist.github.com/felipecaputo/535541dd7cfd06b5070844375fc16aa4
+//http://www.softwareschule.ch/examples/jsonlib.htm
+
+Const 
+  WeatherAPIKEY='55013bf3d09cfb0619989a00ed5bed09';      
+  URLWeatherAPI='https://api.openweathermap.org/data/2.5/weather?q=%s&units=metric&appid=%s';
+  RESTCountries = 'https://restcountries.com/v3.1/name/%s';
+  RESTCountriesC = 'https://restcountries.com/v2/capital/%s';
+  
+ JSONDATA = //''''''+LF+
+ '['+
+  //'  {"official":"Ø§Ù„Ø§ØªØØ§Ø¯ Ø§Ù„Ø³ÙˆÙŠØ³Ø±ÙŠ","common":"Ø³ÙˆÙŠØ³Ø±Ø§"}'+
+  '{"official":"Kengevredad Suis","common":"Suis"},                      ' +LF+
+  //'  {"official":"Å vÃ½carskÃ¡ konfederace","common","Å vÃ½carsko"},     '+
+  '  {"official":"Swiss Confederation","common":"Switzerland"},            '+
+  //'  {"official":"Å veitsi KonfÃ¶deratsioon","common":"Å veits"},          '+
+  '  {"official":"Sveitsin valaliitto","common":"Sveitsi"},                '+LF+
+  '  {"official":"ConfÃ©dÃ©ration suisse","common":"Suisse"},              '+LF+
+  //'  {"official":"Å¡vicarska Konfederacija","common":"Å vicarska"},        '+
+  '  {"official":"SvÃ¡jc","common":"SvÃ¡jc"},                              '+
+  '  {"official":"Confederazione svizzera","common":"Svizzera"}            '+
+      ']'; //+LF+//; //+LF+
+        //'''''';
+     
+ JSONDATA2 = //''''''+LF+
+ '['+
+  ' {"official":"Ø§Ù„Ø§ØªØØ§Ø¯ Ø§Ù„Ø³ÙˆÙŠØ³Ø±ÙŠ","common":"Ø³ÙˆÙŠØ³Ø±Ø§"},'+
+  ' {"official":"Kengevredad Suis","common":"Suis"},                      '+
+  ' {"official":"Å vÃ½carskÃ¡ konfederace","common":"Å vÃ½carsko"},      '+
+  ' {"official":"Swiss Confederation","common":"Switzerland"},            '+
+  ' {"official":"Å veitsi KonfÃ¶deratsioon","common":"Å veits"},          '+
+  ' {"official":"Sveitsin valaliitto","common":"Sveitsi"},                '+
+  ' {"official":"ConfÃ©dÃ©ration suisse","common":"Suisse"},              '+
+  ' {"official":"Å¡vicarska Konfederacija","common":"Å vicarska"},        '+
+  ' {"official":"SvÃ¡jc","common":"SvÃ¡jc"},                              '+
+  ' {"official":"Confederazione svizzera","common":"Svizzera"}            '+
+      ']'; //+LF+//; //+LF+
+        //'''''';
+  
+function GetWeatherStreamJSON(const Data, APIKEY: string): string;
+var encodURL: string;
+    mapStrm: TStringStream; jo: TJSONObject; 
+begin
+  encodURL:= Format(URLWeatherAPI,[HTTPEncode(Data), APIKEY]);         
+  mapStrm:= TStringStream.create('');
+  try
+    HttpGet(EncodURL, mapStrm);  //WinInet
+    mapStrm.Position:= 0;
+    jo:= TJSONObject.Create4(mapStrm.datastring);
+    result:= jo.getjsonarray('weather').getjsonobject(0).getstring('description');
+    result:= result+' '+jo.getjsonobject('main').getstring('temp');
+  except  
+    writeln('Error: '+mapstrm.datastring);
+    writeln('E: '+ExceptiontoString(exceptiontype, exceptionparam));   
+  finally
+    mapStrm.Free;                                 
+    encodURL:= '';
+    jo.Free;
+  end;
+end;
+
+const HIDDENT='"flag": "https://flagcdn.com/ch.svg",'+
+    '"regionalBlocs": [                             '+
+    '  {                                            '+
+    '    "acronym": "EFTA",                         '+
+    '    "name": "European Free Trade Association"  '+
+    '  }                                            '+
+    '],                                             '+
+    '"cioc": "SUI",                                 '+
+    '"independent": true                            '+
+ '}                                                 ';
+
+//private final static String JSON_TEST_DATA
+const HIDDENT3=
+         '{'
+        + '   \"tms_guid\": \"9LaHmoHpmTd811R\", '
+        + '   \"recharge_status\": \"100\", '
+        + '   \"message\": \"Transaction Successful\", '
+        + '   \"response_time\": { '
+        + '      \"verifyClient\": 0.0281, '
+        + '      \"verifyGuid\": 0.8695, '
+        + '      \"verifyOperator\": 0.8698,'
+        + '      \"verifyMsid\": 0.8698,'
+        + '      \"tms_guid\": 1.6971,'
+        + '      \"queryErr\": 7.4243,'
+        + '      \"StoringRecharge\": 7.4358,'
+        + '      \"UpdatingBalance\": 7.448'
+        + '   }'
+        + '}';
+        
+const HIDDENT4INVALID=        
+   '{'+
+   ' "tms_guid": "9LaHmoHpmTd811R",         '+
+   ' "recharge_status": "100",              '+
+   ' "message": "Transaction Successful",   '+
+   ' "response_time": {                     '+
+   '   "verifyClient": 0.0281,              '+
+   '   "verifyGuid": 0.8695,                '+
+   '   "verifyOperator": 0.8698,            '+
+   '   "verifyMsid": 0.8698,                '+
+   '   "tms_guid": 1.6971,                  '+
+   '   "queryErr": 7.4243,                  '+
+   '   "StoringRecharge": 7.4358,           '+
+   '   "UpdatingBalance": 7.448             '+
+   '  }                                     '+
+   '}                                       ';
+   
+const HIDDENT4VALID=
+   '{'+
+	'"tms_guid": "9LaHmoHpmTd811R",          '+
+	'"recharge_status": "100",               '+
+	'"message": "Transaction Successful",    '+
+	'"response_time": {                      '+
+	'	"verifyClient": 0.0281,               '+
+	'	"verifyGuid": 0.8695,                 '+
+	'	"verifyOperator": 0.86                '+
+	'	"verifyMsid": 0.8698,                 '+
+	'	"tms_guid": 1.6971,                   '+
+	'	"queryErr": 7.4243,                   '+
+	'	"StoringRecharge": 7.4358,            '+
+	'	"UpdatingBalance": 7.448              '+
+	' }                                      '+
+   '}';
+ 
+ 
+const
+ ArgInstallUpdate = '/install_update';
+ ArgRegisterExtension = '/register_global_file_associations';
+ var TimeServers : array[1..4] of string;   
+   
+procedure SetSynchroTime;
+var  mySTime: TIdSNTP;
+   success: Boolean;
+   i: Integer;
+begin
+mySTime := TIdSNTP.Create(nil);
+success := False;
+try
+ for i := Low(TimeServers) to High(TimeServers) do begin
+ mySTime.Host := TimeServers[i];
+ try
+ mySTime.host;
+ if mySTime.DateTime > 0 then begin 
+    success := True;
+    Writeln('Time synchronized successfully with: ' + TimeServers[i]);
+    Writeln('The internet time: ' + DateTimeToStr(mySTime.DateTime));
+    Break;
+ end;
+ except
+       Writeln('Failed to sync with ' + TimeServers[i]);
+ end;
+ end;
+ if not success then Writeln('All NTP servers failed to synchronize.');
+finally
+ mySTime.Free;
+ end;
+end;  
+
+function Test99(out Msg: string): Boolean;
+var
+  Json: TMcJsonItem;
+  i: Integer;
+begin
+  Msg := 'Test: Github readme.md content ex. 99';
+  Json := TMcJsonItem.Create();
+  try
+    try
+      // add some pairs.
+      Json.Add('key1').AsInteger := 1;
+      Json.Add('key2').AsBoolean := True;
+      Json.Add('key3').AsNumber  := 1.234;
+      Json.Add('key4').AsString  := 'value 1';
+      // add an array
+      Json.Add1('array', jitArray);
+      for i := 1 to 3 do
+        Json['array'].Add('').AsInteger := i;
+      // save a backup to file
+      if (Json['array'].Count = 3) then
+        Json.SaveToFile(exepath+'examples\test99.json', true, true);
+      // remove an item
+      Json.Delete1('array');
+      // oops, load the backup
+      if (Json.Count = 4) then
+        Json.LoadFromFile(exepath+'examples\test99.json', true);
+      // test final result
+      Result := (Json.AsJSON = '{"key1":1,"key2":true,"key3":1.234,"key4":"value 1","array":[1,2,3]}');
+      writeln(formatjson(Json.AsJson));
+    except
+      Result := False;
+    end;
+  finally
+    Json.Free;
+  end;
+end;
+
+//https://stackoverflow.com/questions/22394748/json-conversion-error-expected-after-key
+//{{"x" : 100, "y" : 90},{"x" : 100, "y" : 85}}
+//Use [] not {} as the outer brackets, or :[{ --> :{{
+
+procedure TRestOnResponseEvent2(ARestClient: TRestClient; ResponseCode: Integer; 
+                                              const ResponseContent: string);  
+ begin
+   writeln('@addr of:'+objtostr(arestclient));
+   //writeln('response cont: '+responsecontent)
+   writeln('response code: '+itoa(responsecode));
+   writeln('enabled compression '+botostr(arestclient.EnabledCompression));
+   writeln('content-encoding:'+arestclient.responseheader['Content-Encoding']);
+   writeln('verifycert: '+botostr(arestclient.verifycert));
+ end;    
+
+function GetRestCountriesJSON2(const URLCountry, Datafeed, APIKEY: string; map: boolean): string;
+var encodURL, tmpstr, savstr: string;
+    mapStrm: TStringStream; jo,jo2: TJSONObject; ajar: TJSONArray; //jconv:TJSONConverter ;
+    job: TJSON;  N: TMcJsonItem; arest: TRestResource;   savestr: string;
+begin
+  //datafeed:= 'France';
+  encodURL:= Format(URLCountry,[HTTPEncode(Datafeed), APIKEY]); 
+  mapStrm:= TStringStream.create('');
+  try
+    with TRestClient.create(self) do begin
+      arest:= Resource(EncodURL);
+      //HttpGet(EncodURL, mapStrm);  //WinInet
+       arest.ContentType('application/json; charset=utf-8');
+       writ('content types '+arest.GetContentTypes); 
+      //arest.Authorization('Bearer '+CHATGPT_APIKEY2);
+      ConnectionType:= hctWinInet;
+      OnResponse:= @TRestOnResponseEvent2;
+      //arest.post(mapStrm)
+      savestr:= aRest.get;
+      //writ(savestr)
+      SaveStringToStreamUTF8(savestr, mapstrm);
+   end;     
+     writeln('cont size: '+itoa(mapstrm.size));   
+     //  writeln('cont '+(mapstrm.datastring));   
+     mapStrm.Position:= 0;
+     writeln('  ');   
+    // jo:= TJSONObject.Create4(HIDDENT4VALID);   
+     writ(formatjson2 (savestr, 4));
+    //writ(formatjson((mapstrm.datastring)));
+     job:= TJSON.Create();   
+     job.parse(savestr); 
+      //writeln(parsejsonvalue(job.stringify))
+     writeln('trans count: '+itoa(job.jsonarray[0].asobject['translations'].asobject.count));
+     writeln(job.jsonarray[0].asobject['translations'].asobject['ara'].asobject['official'].asstring);
+     writeln(job.jsonarray[0].asobject['translations'].asobject['ces'].asobject['common'].asstring);
+     writ('enctype:'+itoa(ord(DetectUTF8Encoding('Å vÃ½carskÃ '))));
+     writ('enctype:'+itoa(ord(DetectUTF8Encoding('スイス連邦')))); 
+     
+      
+     N := TMcJsonItem.Create;
+      N.AsJSON := savestr; //'{"i": 123, "f": 123.456, "s": "abc", "b": true, "n": null}';
+      //N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
+      //N.Path('o.k2').AsString := 'value2';
+      //writ( N.Path('o.k2').AsString);
+      //writ(N.Path('name.nativeName.fra.official').AsString); // := 'value2';
+      writ('name count '+itoa(N['name'].count));
+      writ('trans count '+itoa(N['name']['translations'].count));
+      writ('trans item test'+N['name']['translations'].keys[1]);
+       for it:= 0 to N['name']['translations'].count-1 do 
+          writ('langitem: '+itoa(it+1)+#9+N['name']['translations'].items[it]['official'].asstring +
+                                     ', '+N['name']['translations'].keys[it]);
+      try 
+        writ('parse and check JSON: '+botostr( N.Check(savestr, false)));
+        //writ(botostr(N.CheckException( '{"k":1, "k":2}', false ))); // Answer will be false
+        writ(botostr(N.CheckException(savestr, false ))); // Answer will be false
+      except
+        writeln(ExceptionToString(ExceptionType, ExceptionParam));
+      end;    
+     writ('parse & check JSON: '+botostr(N.Check(utf8decode(loadfile(Exepath+'\restcountrieskeysutf812.txt')),false)));
+     //writ(formatjson2 (utf8decode(loadfile(Exepath+'\restcountrieskeysutf812.txt')), 4));
+     N.Free;    //*)
+    
+    //E: Exception: <TJsonValue>"translations" value type error: jvObject to jvString
+    //E: Exception: <TJson>json struct type is not jsObject
+ 
+    job.free;
+    
+    //imoortant hack: we have to replace json node from [{ to { ! 
+    //tmpstr:= StringReplace(mapStrm.datastring, '[{"name','{"name',[rfReplaceAll, rfIgnoreCase]);
+    tmpstr:= StringReplace(savestr, '[{"name',
+                           '{"name',[rfReplaceAll, rfIgnoreCase]);
+  
+    // writeln('tempstr: '+CharsetConversion(JSONUnescape((tmpstr), #13#10), UTF_8, ISO_8859_1));
+    // writeln('tempstr: '+CharsetConversion(ParseJSOnValue((mapStrm.datastring)), UTF_8, ISO_8859_1));
+       jo:= TJSONObject.Create4(''+(tmpstr)+'}');  
+       jo2:= jo.getjsonobject('translations');
+        writeln('languages: '+itoa(jo2.length));
+         for it:= 0 to jo2.length-1 do begin
+          writeln(jo2.keys[it]+','+JSONUnescape(jo2.getstring(jo2.keys[it]),#13#10));   
+          {writeln(jo2.keys[it]+','+CharsetConversion(JSONUnescape(jo2.getstring(jo2.keys[it]),
+                       #13#10),UTF_8, CP1250));
+               //}
+         end; 
+        jo2:= jo.getjsonobject('languages');
+        writeln('official langs len: '+itoa(jo2.length));
+       //ajar:= jo.names;
+         for it:= 0 to jo2.length-1 do 
+          writeln(JSONUnescape(jo2.getstring(jo2.keys[it]),#13#10));
+
+     {  for it:= 0 to jo2.length-1 do begin
+         //writeln(JSONUnescape(jo2.getstring(jo2.keys[it]), #13#10));
+         //writeln(CharsetConversion(parsejsonvalue(jo2.getstring(jo2.keys[it])),UTF_8,ISO_8859_1));
+         //savstr:= savstr + jo2.getstring(jo2.keys[it]);
+     end;  } 
+     {
+     savestring3(exepath+'restcountrieskeysutf812.txt', JSONUnescape(savestr,#13#10 ), false);
+     openfile(exepath+'restcountrieskeysutf812.txt');
+      //}
+      writeln('  ');                           
+      //https://onlinetools.com/unicode/check-spoofed-unicode-text  
+      sleep(500);
+      // openfile(exepath+'restcountrieskeysutf8.txt');  
+     writ('population: '+jo.getstring('population'));   
+     writ('area: '+jo.getstring('area')); 
+     writ('gini index: '+jo.getstring('gini'));   
+     ajar:= jo.getjsonarray('borders'); 
+     writeln('len names borders: '+itoa(ajar.length))   
+     for it:= 0 to ajar.length-1 do 
+             writeln(ajar.getstring(it));      //}
+     jo2:= jo.getjsonobject('languages');  
+     writeln('len names languages: '+itoa(jo2.length))  
+     for it:= 0 to jo2.length-1 do begin
+        writeln(jo2.getstring(jo2.keys[it])); 
+     end;    //}
+     writeln(jo.getjsonobject('flags').getstring('png'))   
+     if map then openweb(jo.getjsonobject('maps').getstring('openStreetMaps'));    
+  except  
+    //writeln('Error: '+mapstrm.datastring);
+    writeln('E: '+ExceptiontoString(exceptiontype, exceptionparam));   
+  finally
+    mapStrm.Free;                                 
+    encodURL:= '';
+    jo.Free;
+    //ajar.Free; //jo2.Free;
+  end;
+end;
+
+function RemoveChars2(sourceString: string; sCharsToBeRemoved: string):string;
+var I: Integer;
+begin
+  //Prepare enpty string for our result str to which we will be copying our end characters
+  result := '';
+  //Loop through the whole string
+  for I := 1 to Length(sourceString) do begin
+    //If specific haracter can't be found in sCharsToBeRemoved copy that character to the 
+    //result string
+    if Pos(sourceString[I], sCharsToBeRemoved) = 0 then begin
+      result := result + sourceString[I];
+    end;
+  end;
+end;
+
+type
+  TReplacePair = record
+    TextValue: string;
+    ReplaceValue: string;
+  end;
+  TReplacePairs = array of TReplacePair;
+
+function GetReplacementPairs: TReplacePairs;
+var
+  ConfigInfo: TStringList;
+  i, Split: Integer;
+begin
+  ConfigInfo := TStringList.Create;
+  try
+    ConfigInfo.LoadFromFile('ReplacementPairs.txt');
+    SetLength(Result, ConfigInfo.Count);
+    for i := 0 to ConfigInfo.Count - 1 do begin
+      Split := Pos('|', ConfigInfo[i]);
+      Result[i].TextValue := Copy(ConfigInfo[i], 1, Split - 1);
+      Result[i].ReplaceValue := Copy(ConfigInfo[i], Split + 1, MaxInt);
+    end;
+  finally
+    ConfigInfo.Free;
+  end;
+end;
+
+
+const DEF_JSONDECODE =
+   'def decode_and_print_json(data):               '+LF+
+   '   # Laden der JSON-Daten                      '+LF+
+   '   decoded_data = json.loads(data)             '+LF+
+   '                                               '+LF+
+   '   # Iterieren durch und Dekodierung der UTF-8 Zeichen           '+LF+
+   '   for entry in decoded_data:                                    '+LF+
+   '     for key, value in entry.items():                            '+LF+
+   '       entry[key] = value.encode("latin1").decode("utf-8")       '+LF+
+   '                                                                 '+LF+
+   '   # Darstellung der dekodierten Daten                           '+LF+
+   '   pretty_json= json.dumps(decoded_data,ensure_ascii=False,indent=4)'+LF+
+   '   result = pretty_json  #print(pretty_json)                      ';
+
+const DEF_JSONDECODE2 =
+    'def improve_json_output(json_data):                                   '+LF+
+    '   # Decodiere und formatiere die JSON-Daten mit UTF-8                '+LF+
+    '   improved_json= json.dumps(json_data, indent=2, ensure_ascii=False) '+LF+
+    '   return improved_json                                               ';
+
+procedure PyCodeJSON(imgpath: string);
+begin
+  with TPythonEngine.Create(Nil) do begin
+  //pythonhome:= 'C:\Users\max\AppData\Local\Programs\Python\Python36-32\';
+  try
+    loadDLL;
+    ExecString('from math import factorial');
+    execstr('import json');
+    execstr(DEF_JSONDECODE2);
+    Println(EvalStr('[n for n in range(5*24) if str(factorial(n)).count("0")==23]')); 
+   // Println(EvalStr('decode_and_print_json('+JSONDATA+')'));
+     Println(EvalStr('improve_json_output('+JSONDATA+')'));
+  except
+    raiseError;        
+  finally 
+    unloadDLL;      
+    free;
+  end; 
+ end;
+end; 
+
+
+{var ESCAPES:    set of Char; // = ['b', 't', 'n', 'f', 'r', '"', '/', '\', 'u' ];
+    HEXA:       tcharset;// = ['0'..'9', 'A'..'F', 'a'..'f'];
+function escapeChar_(const aStr: string; aPos, aLen: Integer; out aUnk: Boolean): Integer;
+    }
+    
+type
+  TTTest = function(out Msg: string): Boolean;
+
+procedure JCheck(Test: TTTest; var Passed, Failed: Integer);
+var  S: string;
+begin
+  if Test(S) then begin
+    Inc(Passed);
+    WriteLn('[PASS] '+ S);
+  end else begin
+    Inc(Failed);
+    WriteLn('[FAIL] '+ S);
+  end;
+end;
+
+
+ //var   IDoc: IHTMLDocument2;
+var regEx: TRegEx; //TPerlRegex or OleVariant if HISUtils;
+    DaysDiff: Double; TotalPassed, TotalFailed: Integer;
+    //aJsonDoc : TalJsonDocumentU;
+    envlist: Tstringlist;  instr: string; cnt: integer;
+    
+
+begin  //@main
+  //maxform1.ShellStyle1click(self)
+  maxform1.Console1Click(self)
+  memo2.font.size:= 12;
+  writ('DebugHeapStatus: '+DebugHeapStatus);
+  writeln('Weatherjs capital Bern: '+GetWeatherStreamJSON('Bern, CH',WeatherAPIKEY));
+  
+   DaysDiff := now - strtodate('20/06/1959');
+    writeln(FloatToStr(DaysDiff));
+    writeln(FloatToStr(trunc(DaysDiff)));
+    DaysDiff := DaySpan(now, strtodate('20/06/1959'));
+    writeln(FloatToStr(trunc(DaysDiff)));
+    writeln(FloatToStr((DaysDiff)));
+   //https://www.wolframalpha.com/input?i=difference+now+-+20.06.1959
+   //test with https://restcountries.com/v3.1/name/switzerland
+    // GetRestCountriesJSON2(RESTCountriesC,'bern','');  
+    
+    GetRestCountriesJSON2(RESTCountries,'Switzerland','', false);   
+   
+    PyCodeJSON('');     
+    
+   // function Test99(out Msg: string): Boolean;
+   //writ(botostr(Test99('out Msg: string')));
+   //https://github.com/maxkleiner/McJSON/tree/main/test 
+    JCheck(@Test99, TotalPassed, TotalFailed);
+    
+   // writ('jsonform '+formatjson2 (JSONDATA2, 4));
+   
+   TimeServers[1] := '0.debian.pool.ntp.org';
+   TimeServers[2] := '1.debian.pool.ntp.org';
+   TimeServers[3] := '2.debian.pool.ntp.org';
+   TimeServers[4] := '3.debian.pool.ntp.org';
+  //SetSynchroTime;
+  
+  //writeln(itoa(JExecute('cmd /C dir *.*',@TTextHandlerQ, true, false))); 
+  //writeln(itoa(JExecute('cmd /c wmic cpu get name',@TTextHandlerQ, true, false))); 
+  //writeln(GETDOSOutput('cmd.exe /c wmic cpu get architecture','C:\'));
+  //writeln(itoa(JExecute('cmd /c netstat -o',@TTextHandlerQ, true, false))); 
+ //writeln(GETDOSOutput('powershell wget "http://www.softwareschule.ch/examples/1080_trend.pas"','C:\'));
+   
+ (*  envlist:= Tstringlist.create;
+   InStr:= loadfile(Exepath+'\restcountrieskeysutf812.txt');
+   //writ(formatJSON(utf8decode(instr)));
+   //getJsonData2(utf8decode(instr),'translations','common');
+   //writ(utf8decode(instr));
+   //jSplit( const Delimiter : char; Input :Str; Strings : TStrings);
+   jSplit( '}', utf8decode(instr), envlist);
+   //StrtoList(InStr, envlist, CRLF)
+   writeln('envlist count: '+itoa(envlist.count));
+   cnt:= 0;
+   regEx:= TRegEx.create('common":"[\w]', [rroNotEmpty]); //HISUtils.RegExpr;
+   //regEx.regex:='common [\w+:\w:\w :,]+ Sui';
+   // Execute search
+   for it:= 0 to envlist.count-1 do 
+     if regEx.match(envlist[it]).success then begin
+       writeln(itoa(cnt)+':'+envlist[it]);
+       inc(cnt)
+     end;  
+   regex.Free;
+   envlist.Free;    //*)
+   
+   //EMcJsonException');
+  //SIRegister_TMcJsonItem(CL);
+  //SIRegister_TMcJsonItemEnumerator(CL);  //jetNone )');
+ //McJsonEscapeString( const aStr : string; aEsc : TJEscapeType) : string');
+ //McJsonUnEscapeString( const aStr : string) : string');
+ //GetItemTypeStr( aType : TJItemType) : string');
+ //GetValueTypeStr( aType : TJValueType) : string');
+ //escapeChar(const aStr: string; aPos, aLen: Integer; out aUnk: Boolean): Integer;');
+ //findUtf8BOM(const Stream: TStream): Int64;');
+ //writeln(itoa(wdc_GetRemoteFileSize(
+       
+End.
+
+Doc: https://gitlab.com/amatos/rest-countries/-/blob/master/README.md
+https://github.com/maxkleiner/restcountries
+https://www.postfinance.ch/en/private/paying-saving/international-payments/giro-international.html?utm_source=newsletter&utm_medium=email&utm_campaign=pknl_5_24
+
+{"official":"الاتحاد السويسري","common":"سويسرا"}
+
+瑞士联邦 - Schweizerische Eidgenossenschaft
+瑞       - Rui
+瑞士     - Schweiz
+  士     - Gelehrte
+    联邦 - föderal
+  士联邦 - Föderation der Ritter   
+
+Ein Telemeter (von altgriechisch: τῆλε tēle „fern“ und μέτρον métron „Maß, Maßstab“) ist die Funktion eines Chronographen, 
+Entfernungen zu Ereignissen zu messen, die sowohl Licht als auch Schall von sich geben.
+
+This API works the following way: it offers the service of geocoding, cartography, and many other possibilities. 
+In our example, we will use direct geocoding. We will send the address to receive latitude, longitude, 
+and the information we get via the REST Debugger. To get the response we should configure the JSON root using the data element:
+ 
+It looks like they never renewed their SSL certificate. In the meantime, 
+you can use https://restcountries.com/ is a cloned repo that I update frecuently
+
+      we download a script-file in powershell with wget Invoke-WebRequest open the file to check
+      the content, then execute the script and get the result back to maXbox-console as memo2.
+      Hint: needs a \examples dir otherwise 
+      
+      REPL : 
+      https://meet.google.com/pxu-nehx-qzp
+      
+      gryzzly - gräulich, grisly - grausig  (ghastly awful) - grässlich
+
+   https://rapidapi.com/collection/list-of-free-apis               
+   https://wiki.delphi-jedi.org/wiki/JCL_Help:Execute@string@string@Boolean@PBoolean
+   https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+
+    writeln(GETDOSOutput('cmd.exe /c wmic cpu get architecture','C:\'));
+    writeln(GETDOSOutput('cmd.exe /c wmic cpu get name','C:\'));
+    //to monitor tcp spyware over PID - process ID
+    memo2.setFocus;
+    repeat
+      writeln(GETDOSOutput('cmd.exe /c netstat -o','C:\'));
+      memo2.color:= clsilver;
+      sleep(2000)
+      memo2.color:= clyellow;    
+    until isKeyPressed;  
+    memo2.color:= clwhite;    
+    writeln(SysErrorMessage(GetLastError))
+
+Passwort checker? https://haveibeenpwned.com
+https://dnslytics.com/spf-lookup  
+
+procedure RunDosInMemo(DosApp: string; AMemo:TMemo);
+const
+    READ_BUFFER_SIZE = 2400;
+var
+    Security: TSecurityAttributes;
+    readableEndOfPipe, writeableEndOfPipe: THandle;
+    start: TStartUpInfo;
+    ProcessInfo: TProcessInformation;
+    Buffer: PAnsiChar;
+    BytesRead, AppRunning: DWORD;
+begin
+    Security.nLength := SizeOf(TSecurityAttributes);
+    Security.bInheritHandle := True;
+    Security.lpSecurityDescriptor := nil;
+
+    if CreatePipe({var}readableEndOfPipe, {var}writeableEndOfPipe, @Security, 0) then begin
+        Buffer := AllocMem(READ_BUFFER_SIZE+1);
+        FillChar(Start, Sizeof(Start), #0);
+        start.cb := SizeOf(start);
+
+        // Set up members of the STARTUPINFO structure.
+        // This structure specifies the STDIN and STDOUT handles for redirection.
+        // - Redirect the output and error to the writeable end of our pipe.
+        // - We must still supply a valid StdInput handle (because we used STARTF_USESTDHANDLES to swear that all three handles will be valid)
+        start.dwFlags := start.dwFlags or STARTF_USESTDHANDLES;
+        start.hStdInput := GetStdHandle(STD_INPUT_HANDLE); //we're not redirecting stdInput; but we still have to give it a valid handle
+        start.hStdOutput := writeableEndOfPipe; //we give the writeable end of the pipe to the child process; we read from the readable end
+        start.hStdError := writeableEndOfPipe;
+
+        //We can also choose to say that the wShowWindow member contains a value.
+        //In our case we want to force the console window to be hidden.
+        start.dwFlags := start.dwFlags + STARTF_USESHOWWINDOW;
+        start.wShowWindow := SW_HIDE;
+
+        // Don't forget to set up members of the PROCESS_INFORMATION structure.
+        ProcessInfo := Default(TProcessInformation);
+
+        //WARNING: The unicode version of CreateProcess (CreateProcessW) can modify the command-line "DosApp" string. 
+        //Therefore "DosApp" cannot be a pointer to read-only memory, or an ACCESS_VIOLATION will occur.
+        //We can ensure it's not read-only with the RTL function: UniqueString
+        UniqueString({var}DosApp);
+
+        if CreateProcess(nil, PChar(DosApp), nil, nil, True, NORMAL_PRIORITY_CLASS, nil, nil, start, {var}ProcessInfo) then begin
+            //Wait for the application to terminate, as it writes it's output to the pipe.
+            //WARNING: If the console app outputs more than 2400 bytes (ReadBuffer),
+            //it will block on writing to the pipe and *never* close.
+            repeat
+                Apprunning := WaitForSingleObject(ProcessInfo.hProcess, 100);
+                Application.ProcessMessages;
+            until (Apprunning <> WAIT_TIMEOUT);
+
+            //Read the contents of the pipe out of the readable end
+            //WARNING: if the console app never writes anything to the StdOutput, then ReadFile will block and never return
+            repeat
+                BytesRead := 0;
+                ReadFile(readableEndOfPipe, Buffer[0], READ_BUFFER_SIZE, {var}BytesRead, nil);
+                Buffer[BytesRead]:= #0;
+                OemToAnsi(Buffer,Buffer);
+                AMemo.Text := AMemo.text + String(Buffer);
+            until (BytesRead < READ_BUFFER_SIZE);
+        end;
+        FreeMem(Buffer);
+        CloseHandle(ProcessInfo.hProcess);
+        CloseHandle(ProcessInfo.hThread);
+        CloseHandle(readableEndOfPipe);
+        CloseHandle(writeableEndOfPipe);
+    end;
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+begin {button 1 code}
+   RunDosInMemo('chkdsk.exe c:\',Memo1);
+end;
+
+CL.AddDelphiFunction('procedure RunDosInMemo(DosApp: string; AMemo:TMemo);');
+ShellExecute(0, 'open', Pchar('DocumentName.pdf'), '', '', SW_SHOWNORMAL);
+
+Zahlenschloss 4 Stellen   - 10 Ziffern  > 10^4
+                                          80^4
+                                          90^6
+              0234
+              0023
+              4321
+              Tweets                      128^180
+              Universelle Bibliothek      1.9851555241898344196176987318733e+379     
+                                          128^4 schlechter als 10^20
+              Wieviel Permutationen:   10000
+
+
+work under Windows 7 and 8, which would start the Acrobat Reader and open the file but under
+Windows 10 this no longer is the case. So the next step was to update the call to use ShellExecuteEX instead.
+ShellInfo := Default(TShellExecuteInfo);
+ShellInfo.cbSize := SizeOf(TShellExecuteInfo);
+ShellInfo.lpFile := PChar(Current_Client_Documents + FileName +'.pdf');
+ShellInfo.nShow := SW_SHOWNORMAL;
+
+try
+ShellExecuteEx(@ShellInfo);
+
+The actual code will prepare the Object ShellInfo to contain all of the necessary data to start 
+up the Acrobat Reader and display the generated PDF.
+
+ mX4 executed: 30/08/2022 16:07:02  Runtime: 0:0:2.369  Memload: 45% use
+ mX4 executed: 07/09/2022 09:07:56  Runtime: 0:0:9.906  Memload: 45% use
+ mX4 executed: 07/09/2022 10:23:00  Runtime: 0:0:9.134  Memload: 45% use
+[PASS] Test: Github readme.md content ex. 99
+ mX5🐞 executed: 18/06/2024 14:38:51  Runtime: 0:0:3.830  Memload: 73% use    
+ 
+https://my6.code.blog/2022/09/02/webpostdata/
+
+Locomotive électrique BB26023 livrée Corail logo Beffara (dit nouille). 
+Immatriculation : BB26023. 324712109726 JOUEF BB26023 LOGO beffara ep v sncf oh 1/87 - £146.67.
+
+Interpreters usually take less amount of time to analyze the source code. However, 
+the overall execution time is comparatively slower than compilers. 
+A compiler scans the entire program and translates it from object code as a whole into machine code. 
+  
+{"official":"_______ ________","common":"______"}
+{"official":"Kengevredad Suis","common":"Suis"}
+{"official":"_výcarská konfederace","common":"_výcarsko"}
+{"official":"Swiss Confederation","common":"Switzerland"}
+{"official":"Schweizerische Eidgenossenschaft","common":"Schweiz"}
+{"official":"_veitsi Konföderatsioon","common":"_veits"}
+{"official":"Sveitsin valaliitto","common":"Sveitsi"}
+{"official":"Confédération suisse","common":"Suisse"}
+{"official":"_vicarska Konfederacija","common":"_vicarska"}
+{"official":"Svájc","common":"Svájc"}
+{"official":"Confederazione svizzera","common":"Svizzera"}
+{"official":"_____","common":"___"}
+{"official":"___ __","common":"___"}
+{"official":"Zwitserse Confederatie","common":"Zwitserland"}
+{"official":"__________ _____","common":"_____"}
+{"official":"Konfederacja Szwajcarska","common":"Szwajcaria"}
+{"official":"Confederação Suíça","common":"Suíça"}
+{"official":"___________ ____________","common":"_________"}
+{"official":"_vaj_iarska konfederácia","common":"_vaj_iarsko"}
+{"official":"Confederación Suiza","common":"Suiza"}
+{"official":"__________ _____________","common":"__________"}
+{"official":"Schweiziska edsförbundet","common":"Schweiz"}
+{"official":"_sviçre Konfederasyonu","common":"_sviçre"}
+{"official":"_____  _____","common":"__________"}
+{"official":"____","common":"__"}
+len names borders: 5
+
+ara,{"official":"الاتحاد السويسري","common":"سويسرا"}
+bre,{"official":"Kengevredad Suis","common":"Suis"}
+ces,{"official":"Švýcarská konfederace","common":"Švýcarsko"}
+cym,{"official":"Swiss Confederation","common":"Switzerland"}
+deu,{"official":"Schweizerische Eidgenossenschaft","common":"Schweiz"}
+est,{"official":"Šveitsi Konföderatsioon","common":"Šveits"}
+fin,{"official":"Sveitsin valaliitto","common":"Sveitsi"}
+fra,{"official":"Confédération suisse","common":"Suisse"}
+hrv,{"official":"švicarska Konfederacija","common":"Švicarska"}
+hun,{"official":"Svájc","common":"Svájc"}
+ita,{"official":"Confederazione svizzera","common":"Svizzera"}
+jpn,{"official":"スイス連邦","common":"スイス"}
+nld,{"official":"Zwitserse Confederatie","common":"Zwitserland"}
+per,{"official":"کنفدراسیون سوئیس","common":"سوئیس"}
+pol,{"official":"Konfederacja Szwajcarska","common":"Szwajcaria"}
+por,{"official":"Confederação Suíça","common":"Suíça"}
+tur,{"official":"İsviçre Konfederasyonu","common":"İsviçre"}
+   
+     
+  import json
+
+json_data = '''
+[
+    {"official":"Ø§Ù„Ø§ØªØØ§Ø¯ Ø§Ù„Ø³ÙˆÙŠØ³Ø±ÙŠ","common":"Ø³ÙˆÙŠØ³Ø±Ø§"},
+    {"official":"Kengevredad Suis","common":"Suis"},
+    {"official":"Å vÃ½carskÃ¡ konfederace","common":"Å vÃ½carsko"},
+    {"official":"Swiss Confederation","common":"Switzerland"},
+    {"official":"Å veitsi KonfÃ¶deratsioon","common":"Å veits"},
+    {"official":"Sveitsin valaliitto","common":"Sveitsi"},
+    {"official":"ConfÃ©dÃ©ration suisse","common":"Suisse"},
+    {"official":"Å¡vicarska Konfederacija","common":"Å vicarska"},
+    {"official":"SvÃ¡jc","common":"SvÃ¡jc"},
+    {"official":"Confederazione svizzera","common":"Svizzera"}
+]
+'''
+
+# Decoding JSON data with correct UTF-8 handling
+decoded_data = json.loads(json_data)
+
+for entry in decoded_data:
+    for key, value in entry.items():
+        print(f"{key}: {value}")
+
+# Correctly display the JSON data
+
+
+uses
+  SysUtils, IdHTTP, DateUtils;
+
+function GetTimeFromServer(const ServerList: array of string): TDateTime;
+var
+  i: Integer;
+  IdHTTP: TIdHTTP;
+  Response: string;
+begin
+  IdHTTP := TIdHTTP.Create(nil);
+  try
+    for i := 0 to High(ServerList) do
+    begin
+      try
+        // Versuchen, die Zeit vom aktuellen Server abzurufen
+        Response := IdHTTP.Get(ServerList[i]);
+        // Verarbeiten der Antwort, um die Zeit zu extrahieren (Annahme: Zeit ist direkt im Response)
+        Result := StrToDateTime(Response);
+        Exit; // Erfolg, Funktion beenden
+      except
+        on E: Exception do
+        begin
+          // Fehler beim Abrufen der Zeit, zum nächsten Server weitergehen
+          if i = High(ServerList) then
+            raise Exception.Create('Kein Zeitserver erreichbar');
+        end;
+      end;
+    end;
+  finally
+    IdHTTP.Free;
+  end;
+end;
+
+// Beispielaufruf der Funktion
+var
+  TimeServers: array[0..3] of string = (
+    'http://worldtimeapi.org/api/timezone/Etc/UTC',
+    'http://worldclockapi.com/api/json/utc/now',
+    'http://timeapi.io/api/Time/current/zone?timeZone=UTC',
+    'http://api.timezonedb.com/v2.1/get-time-zone?key=YOUR_API_KEY&format=json&by=zone&zone=UTC'
+  );
+  CurrentTime: TDateTime;
+begin
+  try
+    CurrentTime := GetTimeFromServer(TimeServers);
+    ShowMessage('Aktuelle Zeit: ' + DateTimeToStr(CurrentTime));
+  except
+    on E: Exception do
+      ShowMessage('Fehler: ' + E.Message);
+  end;
+end;
+
+Antwort Kap. 4.1
+function getJsonData(JsonString: String; User: String; Field: String): String;
+var
+  JSonValue: TJSonValue;
+  JsonArray: TJSONArray;
+  ArrayElement: TJSonValue;
+  FoundValue: TJSonValue;
+begin
+  Result :='';
+
+  // create TJSonObject from string
+  JsonValue := TJSonObject.ParseJSONValue(JsonString);
+
+  // get the array
+  JsonArray := JsonValue as TJSONArray;
+
+  // iterate the array
+  for ArrayElement in JsonArray do begin
+      FoundValue := ArrayElement.FindValue(User);
+      if FoundValue <> nil then begin
+        Result := ArrayElement.GetValue<string>(User + '.' + Field);
+        break;
+      end;
+  end;
+end;
+
+https://stackoverflow.com/questions/46534011/delphi-parse-json-array-or-array
+
+  
+  
