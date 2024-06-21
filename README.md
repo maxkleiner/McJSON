@@ -21,7 +21,7 @@ Some points of interest:
    * BDS 2006 (Delphi and BCP)
    * Lazarus 2.3.0 (FPC 3.2.2)
    * C++Builder XE2 and 10.2.
-   * maXbox5 V5.1.4.98
+   * maXbox5 v5.1.4.98
  * Just one unit (`McJSON`), just one class(`TMcJsonItem`).
  * Inspired by [badunius/myJSON](https://github.com/badunius/myJSON).
  * Improved parser after applying Tan Li Hau's [article](https://lihautan.com/json-parser-with-javascript/#understand-the-grammar).
