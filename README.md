@@ -32,7 +32,7 @@ Some points of interest:
    *  [uJSON](https://sourceforge.net/projects/is-webstart/) (Delphi Web Utils)
 
 ## Examples
-### Object-Pascal for maXbox Example
+### Object-Pascal for maXbox Examples
 Modification of missing default parameter and overloading
 
 ```pascal
